@@ -16,9 +16,6 @@ const _EXPANSION_ROM_START: usize = 0x4020;
 const _SAVE_ROM_START: usize = 0x6000;
 pub const PROGRAM_ROM_START: u16 = 0x8000;
 
-// Memory Addresses
-pub const RESET_VECTOR: u16 = 0xFFFC;
-
 #[derive(Debug)]
 pub struct Memory {
     bytes: [u8; MEMORY_SIZE],

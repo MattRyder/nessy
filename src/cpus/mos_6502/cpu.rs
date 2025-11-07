@@ -1,7 +1,6 @@
-use crate::cpu::memory::{MemoryAccess, PROGRAM_ROM_START, RESET_VECTOR};
-
-use super::instruction_set::InstructionSet6502;
+use super::instruction_set::InstructionSet;
 use super::memory::Memory;
+use super::memory::{MemoryAccess, PROGRAM_ROM_START};
 use super::opcode::OpCode;
 use super::status::Status;
 
@@ -12,8 +11,11 @@ pub struct Registers {
     pub y: u8,
 }
 
+// Memory Addresses
+pub const RESET_VECTOR: u16 = 0xFFFC;
+
 #[derive(Default)]
-pub struct CPU {
+pub struct Mos6502 {
     pub registers: Registers,
     pub status: Status,
     pub program_counter: u16,
@@ -26,7 +28,7 @@ pub enum InterpretResult {
     EmptyProgram,
 }
 
-impl InstructionSet6502 for CPU {
+impl InstructionSet for Mos6502 {
     fn lda(&mut self, param: u8) {
         self.registers.a = param;
         self.status.set_flags_for_result(self.registers.a);
@@ -48,7 +50,7 @@ impl InstructionSet6502 for CPU {
     }
 }
 
-impl CPU {
+impl Mos6502 {
     pub fn reset(&mut self) {
         self.registers = Registers::default();
         self.status = Status::default();
@@ -87,10 +89,10 @@ impl CPU {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cpu::status::Flags;
+    use crate::cpus::mos_6502::status::Flags;
 
-    fn create_cpu_with_program(program: &[u8]) -> CPU {
-        let mut cpu = CPU::default();
+    fn create_cpu_with_program(program: &[u8]) -> Mos6502 {
+        let mut cpu = Mos6502::default();
         cpu.load_program(program);
         cpu.reset();
         cpu
@@ -98,7 +100,7 @@ mod tests {
 
     #[test]
     fn reset_resets_everything() {
-        let mut cpu = CPU::default();
+        let mut cpu = Mos6502::default();
         cpu.registers.a = 1;
         cpu.registers.x = 2;
         cpu.registers.y = 3;

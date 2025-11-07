@@ -1,4 +1,4 @@
-pub trait InstructionSet6502 {
+pub trait InstructionSet {
     // LDA - Load Accumulator
     fn lda(&mut self, param: u8);
 
