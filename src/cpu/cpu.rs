@@ -1,4 +1,4 @@
-use crate::cpu::memory::{MemoryAccess, PROGRAM_ROM_START};
+use crate::cpu::memory::{MemoryAccess, PROGRAM_ROM_START, RESET_VECTOR};
 
 use super::instruction_set::InstructionSet6502;
 use super::memory::Memory;
@@ -49,13 +49,15 @@ impl InstructionSet6502 for CPU {
 }
 
 impl CPU {
-    pub fn new() -> Self {
-        CPU::default()
+    pub fn reset(&mut self) {
+        self.registers = Registers::default();
+        self.status = Status::default();
+        self.program_counter = self.memory.read_u16(RESET_VECTOR);
     }
 
     pub fn load_program(&mut self, program: &[u8]) {
         self.memory.write_slice(PROGRAM_ROM_START, program);
-        self.program_counter = PROGRAM_ROM_START;
+        self.memory.write_u16(RESET_VECTOR, PROGRAM_ROM_START);
     }
 
     pub fn run(&mut self) -> InterpretResult {
@@ -90,14 +92,32 @@ mod tests {
     fn create_cpu_with_program(program: &[u8]) -> CPU {
         let mut cpu = CPU::default();
         cpu.load_program(program);
-
+        cpu.reset();
         cpu
+    }
+
+    #[test]
+    fn reset_resets_everything() {
+        let mut cpu = CPU::default();
+        cpu.registers.a = 1;
+        cpu.registers.x = 2;
+        cpu.registers.y = 3;
+        cpu.status.flags = Flags::all();
+
+        cpu.reset();
+
+        assert_eq!(0, cpu.registers.a);
+        assert_eq!(0, cpu.registers.x);
+        assert_eq!(0, cpu.registers.y);
+
+        assert_eq!(Flags::empty(), cpu.status.flags);
+
+        assert_eq!(0, cpu.program_counter);
     }
 
     #[test]
     fn test_lda_immediate_load_data() {
         let mut cpu = create_cpu_with_program(&[0xA9, 0x05, 0x00]);
-
         cpu.run();
 
         assert_eq!(0x05, cpu.registers.a);
