@@ -7,7 +7,7 @@ pub trait MemoryAccess {
     fn write_u16(&mut self, address: u16, data: u16);
 }
 
-const MEMORY_SIZE: usize = 0xFFFF;
+pub const MEMORY_SIZE: usize = 0xFFFF;
 
 // Memory Map
 const _CPU_RAM_START: usize = 0x0000;
@@ -19,6 +19,12 @@ pub const PROGRAM_ROM_START: u16 = 0x8000;
 #[derive(Debug)]
 pub struct Memory {
     bytes: [u8; MEMORY_SIZE],
+}
+
+impl Memory {
+    pub fn new(bytes: [u8; MEMORY_SIZE]) -> Self {
+        Self { bytes }
+    }
 }
 
 impl Default for Memory {
