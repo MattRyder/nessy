@@ -1,8 +1,11 @@
-use super::instruction_set::InstructionSet;
-use super::memory::Memory;
-use super::memory::{MemoryAccess, PROGRAM_ROM_START};
-use super::opcode::OpCode;
-use super::status::Status;
+use crate::{
+    cpus::mos_6502::{
+        memory::{Memory, MemoryAccess, PROGRAM_ROM_START},
+        opcode::OPCODES,
+        status::Status,
+    },
+    interpret_result::{InstructionResult, ProgramResult},
+};
 
 #[derive(Default)]
 pub struct Registers {
@@ -20,12 +23,6 @@ pub struct Mos6502 {
     pub status: Status,
     pub program_counter: u16,
     pub memory: Memory,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum InterpretResult {
-    OK,
-    EmptyProgram,
 }
 
 impl Mos6502 {
@@ -47,25 +44,20 @@ impl Mos6502 {
         self.memory.write_u16(RESET_VECTOR, PROGRAM_ROM_START);
     }
 
-    pub fn run(&mut self) -> InterpretResult {
+    pub fn run(&mut self) -> ProgramResult {
         loop {
             let opcode_byte = self.memory.read(self.program_counter);
             self.program_counter += 1;
 
-            // println!("OpCode: {:x}", opcode_byte);
-
-            match OpCode::try_from(opcode_byte) {
-                Ok(opcode) => match opcode {
-                    OpCode::Break => return InterpretResult::OK,
-                    OpCode::LoadAccumulator => {
-                        let param = self.memory.read(self.program_counter);
-                        self.program_counter += 1;
-                        self.lda(param);
+            match OPCODES.get(&opcode_byte) {
+                Some(opcode) => match (opcode.execute)(opcode, self) {
+                    InstructionResult::Ok => (),
+                    InstructionResult::IllegalInstruction => {
+                        panic!("Illlegal instruction! Opcode: {:?}", opcode);
                     }
-                    OpCode::TransferAccumulatorToX => self.tax(),
-                    OpCode::IncrementX => self.inx(),
+                    InstructionResult::EndProgram => return ProgramResult::Ok,
                 },
-                Err(_) => panic!("OpCode not implemented: {:x}", opcode_byte),
+                None => panic!("Opcode not implemented: 0x{:x}.", opcode_byte),
             }
         }
     }

@@ -1,8 +1,9 @@
 use super::cpu::Mos6502;
 use super::memory::MemoryAccess;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum AddressMode {
+    Implied,
     Immediate,
     ZeroPage,
     ZeroPageX,
@@ -15,36 +16,31 @@ pub enum AddressMode {
     None,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum AddressModeError {
-    UndefinedAddressMode,
-}
-
 pub trait MemoryAddressing {
-    fn get_address(&self, address_mode: &AddressMode) -> Result<u16, AddressModeError>;
+    fn get_address(&self, address_mode: &AddressMode) -> u16;
 }
 
 impl MemoryAddressing for Mos6502 {
-    fn get_address(&self, address_mode: &AddressMode) -> Result<u16, AddressModeError> {
+    fn get_address(&self, address_mode: &AddressMode) -> u16 {
         match address_mode {
-            AddressMode::Immediate => Ok(self.program_counter),
-            AddressMode::ZeroPage => Ok(self.memory.read(self.program_counter) as u16),
+            AddressMode::Immediate => self.program_counter,
+            AddressMode::ZeroPage => self.memory.read(self.program_counter) as u16,
             AddressMode::ZeroPageX => {
                 let pc_address = self.memory.read(self.program_counter);
-                Ok(pc_address.wrapping_add(self.registers.x) as u16)
+                pc_address.wrapping_add(self.registers.x) as u16
             }
             AddressMode::ZeroPageY => {
                 let pc_address = self.memory.read(self.program_counter);
-                Ok(pc_address.wrapping_add(self.registers.y) as u16)
+                pc_address.wrapping_add(self.registers.y) as u16
             }
-            AddressMode::Absolute => Ok(self.memory.read_u16(self.program_counter)),
+            AddressMode::Absolute => self.memory.read_u16(self.program_counter),
             AddressMode::AbsoluteX => {
                 let pc_address = self.memory.read_u16(self.program_counter);
-                Ok(pc_address.wrapping_add(self.registers.x as u16))
+                pc_address.wrapping_add(self.registers.x as u16)
             }
             AddressMode::AbsoluteY => {
                 let pc_address = self.memory.read_u16(self.program_counter);
-                Ok(pc_address.wrapping_add(self.registers.y as u16))
+                pc_address.wrapping_add(self.registers.y as u16)
             }
             AddressMode::IndirectX => {
                 let base_address = self.memory.read(self.program_counter);
@@ -53,8 +49,7 @@ impl MemoryAddressing for Mos6502 {
                 let lo = self.memory.read(pointer as u16);
                 let hi = self.memory.read(pointer.wrapping_add(1) as u16);
 
-                let address = (hi as u16) << 8 | (lo as u16);
-                Ok(address)
+                (hi as u16) << 8 | (lo as u16)
             }
             AddressMode::IndirectY => {
                 let base_address = self.memory.read(self.program_counter);
@@ -63,11 +58,11 @@ impl MemoryAddressing for Mos6502 {
                 let hi = self.memory.read((base_address).wrapping_add(1) as u16);
 
                 let dereference_base = (hi as u16) << 8 | (lo as u16);
-                let address = dereference_base.wrapping_add(self.registers.y as u16);
-
-                Ok(address)
+                dereference_base.wrapping_add(self.registers.y as u16)
             }
-            AddressMode::None => Err(AddressModeError::UndefinedAddressMode),
+            AddressMode::None | AddressMode::Implied => {
+                panic!("Unsupported address mode: {:?}", &address_mode)
+            }
         }
     }
 }
@@ -79,15 +74,10 @@ mod tests {
     use crate::cpus::mos_6502::{address_mode::MemoryAddressing, cpu::Mos6502};
 
     #[test]
+    #[should_panic(expected = "Unsupported address mode: None")]
     fn test_get_address_with_none_return_err() {
         let cpu = Mos6502::default();
-        let result = cpu.get_address(&AddressMode::None);
-
-        assert!(result.is_err());
-        assert_eq!(
-            AddressModeError::UndefinedAddressMode,
-            result.err().unwrap()
-        );
+        cpu.get_address(&AddressMode::None);
     }
 
     #[test]
@@ -99,8 +89,7 @@ mod tests {
 
         let result = cpu.get_address(&AddressMode::Immediate);
 
-        assert!(result.is_ok());
-        assert_eq!(0xFF, result.unwrap());
+        assert_eq!(0xFF, result);
     }
 
     #[test]
@@ -116,8 +105,7 @@ mod tests {
 
         let result = cpu.get_address(&AddressMode::ZeroPage);
 
-        assert!(result.is_ok());
-        assert_eq!(0xAA, result.unwrap());
+        assert_eq!(0xAA, result);
     }
 
     #[test]
@@ -135,8 +123,7 @@ mod tests {
 
         let result = cpu.get_address(&AddressMode::ZeroPageX);
 
-        assert!(result.is_ok());
-        assert_eq!(0xBC, result.unwrap());
+        assert_eq!(0xBC, result);
     }
 
     #[test]
@@ -154,8 +141,7 @@ mod tests {
 
         let result = cpu.get_address(&AddressMode::ZeroPageY);
 
-        assert!(result.is_ok());
-        assert_eq!(0xC6, result.unwrap());
+        assert_eq!(0xC6, result);
     }
 
     #[test]
@@ -172,8 +158,7 @@ mod tests {
 
         let result = cpu.get_address(&AddressMode::Absolute);
 
-        assert!(result.is_ok());
-        assert_eq!(0x1234, result.unwrap());
+        assert_eq!(0x1234, result);
     }
 
     #[test]
@@ -192,8 +177,7 @@ mod tests {
 
         let result = cpu.get_address(&AddressMode::AbsoluteX);
 
-        assert!(result.is_ok());
-        assert_eq!(0x1235, result.unwrap());
+        assert_eq!(0x1235, result);
     }
 
     #[test]
@@ -212,8 +196,7 @@ mod tests {
 
         let result = cpu.get_address(&AddressMode::AbsoluteY);
 
-        assert!(result.is_ok());
-        assert_eq!(0x1235, result.unwrap());
+        assert_eq!(0x1235, result);
     }
 
     #[test]
@@ -235,8 +218,7 @@ mod tests {
 
         let result = cpu.get_address(&AddressMode::IndirectX);
 
-        assert!(result.is_ok());
-        assert_eq!(0xBAFC, result.unwrap());
+        assert_eq!(0xBAFC, result);
     }
 
     #[test]
@@ -258,7 +240,6 @@ mod tests {
 
         let result = cpu.get_address(&AddressMode::IndirectY);
 
-        assert!(result.is_ok());
-        assert_eq!(0xFFFC, result.unwrap());
+        assert_eq!(0xFFFC, result);
     }
 }

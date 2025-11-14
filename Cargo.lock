@@ -3,14 +3,28 @@
 version = 4
 
 [[package]]
+name = "assert_hex"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7010f1430f0fc8ca80bdb5e5d074db68776a2e268ec6cf80b53712d3ea4bca7"
+
+[[package]]
 name = "bitflags"
 version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
 
 [[package]]
+name = "lazy_static"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+
+[[package]]
 name = "nessy"
 version = "0.1.0"
 dependencies = [
+ "assert_hex",
  "bitflags",
+ "lazy_static",
 ]
