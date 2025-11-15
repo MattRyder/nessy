@@ -25,6 +25,16 @@ impl Memory {
     pub fn new(bytes: [u8; MEMORY_SIZE]) -> Self {
         Self { bytes }
     }
+
+    pub fn new_with_bytes(address_datas: Vec<(usize, u8)>) -> Self {
+        let mut bytes = [0u8; MEMORY_SIZE];
+
+        for (address, data) in address_datas {
+            bytes[address] = data;
+        }
+
+        Self { bytes }
+    }
 }
 
 impl Default for Memory {

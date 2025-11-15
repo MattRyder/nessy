@@ -27,6 +27,14 @@ impl Default for Status {
 }
 
 impl Status {
+    pub fn set_carry_flag(&mut self, carried: bool) {
+        if carried {
+            self.flags |= Flags::CARRY;
+        } else {
+            self.flags &= !Flags::CARRY;
+        }
+    }
+
     pub fn set_flags_for_result(&mut self, result: u8) {
         if result == 0 {
             self.flags |= Flags::ZERO;

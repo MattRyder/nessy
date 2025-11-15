@@ -3,6 +3,7 @@ use super::memory::MemoryAccess;
 
 #[derive(Debug, PartialEq)]
 pub enum AddressMode {
+    Accumulator,
     Implied,
     Immediate,
     ZeroPage,
@@ -23,6 +24,7 @@ pub trait MemoryAddressing {
 impl MemoryAddressing for Mos6502 {
     fn get_address(&self, address_mode: &AddressMode) -> u16 {
         match address_mode {
+            AddressMode::Accumulator => panic!("Don't use get_address for accumulator."),
             AddressMode::Immediate => self.program_counter,
             AddressMode::ZeroPage => self.memory.read(self.program_counter) as u16,
             AddressMode::ZeroPageX => {
