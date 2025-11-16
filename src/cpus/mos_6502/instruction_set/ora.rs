@@ -1,24 +1,18 @@
 use crate::{
     cpus::mos_6502::{
-        address_mode::MemoryAddressing, cpu::Mos6502, memory::MemoryAccess, opcode::OpCode,
+        cpu::Mos6502, instruction_set::helpers::Helpers, memory::MemoryAccess, opcode::OpCode,
     },
     interpret_result::InstructionResult,
 };
 
+// ORA - Logical Inclusive OR
 pub struct Ora {}
 
 impl Ora {
-    // ORA - Logical Inclusive OR
     pub fn ora(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
-        let address = cpu.get_address(&opcode.address_mode);
-        let memory_value = cpu.memory.read(address);
-
-        cpu.registers.a |= memory_value;
-        cpu.status.set_flags_for_result(cpu.registers.a);
-
-        cpu.program_counter += opcode.bytes as u16;
-
-        InstructionResult::Ok
+        Helpers::accumulator_rule(opcode, cpu, |cpu, address| {
+            cpu.registers.a |= cpu.memory.read(address);
+        })
     }
 }
 

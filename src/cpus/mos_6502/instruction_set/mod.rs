@@ -1,3 +1,4 @@
+pub mod and;
 pub mod asl;
 pub mod brk;
 pub mod helpers;
