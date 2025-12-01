@@ -74,15 +74,20 @@ impl MemoryAddressing for Mos6502 {
 
 #[cfg(test)]
 mod tests {
+    use sif::parameterized;
+
     use super::*;
     use crate::cpus::mos_6502::memory::{MEMORY_SIZE, Memory};
     use crate::cpus::mos_6502::{address_mode::MemoryAddressing, cpu::Mos6502};
 
-    #[test]
-    #[should_panic(expected = "Unsupported address mode: None")]
-    fn test_get_address_with_none_return_err() {
-        let cpu = Mos6502::default();
-        cpu.get_address(&AddressMode::None);
+    #[parameterized]
+    #[case(AddressMode::None)]
+    #[case(AddressMode::Implied)]
+    #[case(AddressMode::Relative)]
+    #[case(AddressMode::Accumulator)]
+    #[should_panic]
+    fn test_get_address_with_none_return_err(address_mode: AddressMode) {
+        Mos6502::default().get_address(&address_mode);
     }
 
     #[test]

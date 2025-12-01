@@ -7,7 +7,7 @@ use crate::{
     interpret_result::{InstructionResult, ProgramResult},
 };
 
-#[derive(Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Registers {
     pub a: u8,
     pub x: u8,
@@ -17,11 +17,14 @@ pub struct Registers {
 // Memory Addresses
 pub const RESET_VECTOR: u16 = 0xFFFC;
 
+pub const STACK_POINTER_RESET: u8 = 0xFF;
+
 #[derive(Default)]
 pub struct Mos6502 {
     pub registers: Registers,
     pub status: Status,
     pub program_counter: u16,
+    pub stack_pointer: u8,
     pub memory: Memory,
 }
 
@@ -37,6 +40,7 @@ impl Mos6502 {
         self.registers = Registers::default();
         self.status = Status::default();
         self.program_counter = self.memory.read_u16(RESET_VECTOR);
+        self.stack_pointer = STACK_POINTER_RESET;
     }
 
     pub fn load_program(&mut self, program: &[u8]) {
@@ -53,7 +57,13 @@ impl Mos6502 {
                 Some(opcode) => match (opcode.execute)(opcode, self) {
                     InstructionResult::Ok => (),
                     InstructionResult::IllegalInstruction => {
-                        panic!("Illlegal instruction! Opcode: {:?}", opcode);
+                        panic!("Illlegal instruction! Opcode: {:?}.", opcode);
+                    }
+                    InstructionResult::StackOverflow => {
+                        panic!("Stack overflow occurred! Opcode: {:?}.", opcode);
+                    }
+                    InstructionResult::StackUnderflow => {
+                        panic!("Stack underflow occurred! Opcode: {:?}.", opcode);
                     }
                     InstructionResult::EndProgram => return ProgramResult::Ok,
                 },

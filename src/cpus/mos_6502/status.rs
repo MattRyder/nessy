@@ -1,5 +1,7 @@
 use bitflags::bitflags;
 
+use crate::cpus::mos_6502::instruction_set::helpers::MSB_MASK;
+
 bitflags! {
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Flags: u8 {
@@ -27,14 +29,23 @@ impl Default for Status {
 }
 
 impl Status {
-    pub fn set_carry_flag(&mut self, carried: bool) {
-        if carried {
-            self.flags |= Flags::CARRY;
+    pub fn set_status_flag(&mut self, flag: Flags, predicate: bool) {
+        if predicate {
+            self.flags |= flag;
         } else {
-            self.flags &= !Flags::CARRY;
+            self.flags &= !flag;
         }
     }
 
+    pub fn set_zero_flag(&mut self, value: u8) {
+        self.set_status_flag(Flags::ZERO, value == 0);
+    }
+
+    pub fn set_negative_flag(&mut self, value: u8) {
+        self.set_status_flag(Flags::NEGATIVE, value & MSB_MASK != 0);
+    }
+
+    #[deprecated]
     pub fn set_flags_for_result(&mut self, result: u8) {
         if result == 0 {
             self.flags |= Flags::ZERO;

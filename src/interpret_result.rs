@@ -3,6 +3,8 @@ pub enum InstructionResult {
     Ok,
     IllegalInstruction,
     EndProgram,
+    StackOverflow,
+    StackUnderflow,
 }
 
 #[derive(Debug, PartialEq)]
