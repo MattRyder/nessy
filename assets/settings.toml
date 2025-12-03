@@ -1,0 +1,7 @@
+# Some settings for the nessy_bin
+title = "NESSY"
+
+[display]
+width = 320
+height = 320
+clear_colour = [100, 149, 237]

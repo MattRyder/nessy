@@ -14,6 +14,8 @@ impl Store {
 
         cpu.memory.write(address, cpu.registers.a);
 
+        cpu.program_counter += opcode.bytes as u16;
+
         InstructionResult::Ok
     }
 
@@ -23,6 +25,8 @@ impl Store {
 
         cpu.memory.write(address, cpu.registers.x);
 
+        cpu.program_counter += opcode.bytes as u16;
+
         InstructionResult::Ok
     }
 
@@ -31,6 +35,8 @@ impl Store {
         let address = cpu.get_address(&opcode.address_mode);
 
         cpu.memory.write(address, cpu.registers.y);
+
+        cpu.program_counter += opcode.bytes as u16;
 
         InstructionResult::Ok
     }

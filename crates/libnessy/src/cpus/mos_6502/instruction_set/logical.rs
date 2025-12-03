@@ -20,13 +20,12 @@ impl Logical {
         operation: fn(cpu: &mut Mos6502, address: u16),
     ) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
+        cpu.program_counter += opcode.bytes as u16;
 
         operation(cpu, address);
 
         cpu.status.set_zero_flag(cpu.registers.a);
         cpu.status.set_negative_flag(cpu.registers.a);
-
-        cpu.program_counter += opcode.bytes as u16;
 
         InstructionResult::Ok
     }
@@ -59,6 +58,8 @@ impl Logical {
         }
 
         let address = cpu.get_address(&opcode.address_mode);
+        cpu.program_counter += opcode.bytes as u16;
+
         let memory_value = cpu.memory.read(address);
 
         let acca_and_mem = cpu.registers.a & memory_value;
