@@ -38,6 +38,7 @@ impl Increment {
 
         let address = cpu.get_address(&opcode.address_mode);
         let memory_value = cpu.memory.read(address);
+        cpu.program_counter += opcode.bytes as u16;
 
         let result = Increment::increment(cpu, memory_value);
 

@@ -31,6 +31,8 @@ impl Compare {
         let address = cpu.get_address(&opcode.address_mode);
         let memory_value = cpu.memory.read(address);
 
+        cpu.program_counter += opcode.bytes as u16;
+
         Compare::compare_set_flags(cpu, cpu.registers.a, memory_value);
 
         InstructionResult::Ok
@@ -51,6 +53,8 @@ impl Compare {
         let address = cpu.get_address(&opcode.address_mode);
         let memory_value = cpu.memory.read(address);
 
+        cpu.program_counter += opcode.bytes as u16;
+
         Compare::compare_set_flags(cpu, cpu.registers.x, memory_value);
 
         InstructionResult::Ok
@@ -70,6 +74,8 @@ impl Compare {
 
         let address = cpu.get_address(&opcode.address_mode);
         let memory_value = cpu.memory.read(address);
+
+        cpu.program_counter += opcode.bytes as u16;
 
         Compare::compare_set_flags(cpu, cpu.registers.y, memory_value);
 

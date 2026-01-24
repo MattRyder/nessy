@@ -53,6 +53,7 @@ impl Rotate {
     ) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
         let memory_value = cpu.memory.read(address);
+        cpu.program_counter += opcode.bytes as u16;
 
         let result = Rotate::rotate(cpu, direction, memory_value);
 

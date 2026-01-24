@@ -49,24 +49,43 @@ impl Mos6502 {
     }
 
     pub fn run(&mut self) -> ProgramResult {
+        self.run_with_callback(|_| {})
+    }
+
+    pub fn run_with_callback<F>(&mut self, mut callback: F) -> ProgramResult
+    where
+        F: FnMut(&mut Mos6502),
+    {
         loop {
+            callback(self);
+
             let opcode_byte = self.memory.read(self.program_counter);
             self.program_counter += 1;
 
             match OPCODES.get(&opcode_byte) {
-                Some(opcode) => match (opcode.execute)(opcode, self) {
-                    InstructionResult::Ok => (),
-                    InstructionResult::IllegalInstruction => {
-                        panic!("Illlegal instruction! Opcode: {:?}.", opcode);
+                Some(opcode) => {
+                    // println!(
+                    //     "Exec: {} (0x{:x}) | Bytes: {} | PC: 0x{:x}",
+                    //     opcode.mnemonic,
+                    //     opcode.opcode,
+                    //     opcode.bytes,
+                    //     self.program_counter - 1
+                    // );
+                    //
+                    match (opcode.execute)(opcode, self) {
+                        InstructionResult::Ok => (),
+                        InstructionResult::IllegalInstruction => {
+                            panic!("Illlegal instruction! Opcode: {:?}.", opcode);
+                        }
+                        InstructionResult::StackOverflow => {
+                            panic!("Stack overflow occurred! Opcode: {:?}.", opcode);
+                        }
+                        InstructionResult::StackUnderflow => {
+                            panic!("Stack underflow occurred! Opcode: {:?}.", opcode);
+                        }
+                        InstructionResult::EndProgram => return ProgramResult::Ok,
                     }
-                    InstructionResult::StackOverflow => {
-                        panic!("Stack overflow occurred! Opcode: {:?}.", opcode);
-                    }
-                    InstructionResult::StackUnderflow => {
-                        panic!("Stack underflow occurred! Opcode: {:?}.", opcode);
-                    }
-                    InstructionResult::EndProgram => return ProgramResult::Ok,
-                },
+                }
                 None => panic!("Opcode not implemented: 0x{:x}.", opcode_byte),
             }
         }

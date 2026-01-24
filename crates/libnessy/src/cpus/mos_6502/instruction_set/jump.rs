@@ -56,6 +56,8 @@ impl Jump {
 
         let subroutine_address = cpu.get_address(&opcode.address_mode);
 
+        cpu.program_counter += opcode.bytes as u16;
+
         // Get the high / lo bytes of the current PC
         let hi_byte = (cpu.program_counter >> 8) as u8;
         let lo_byte = (cpu.program_counter & 0x00FF) as u8;
@@ -86,7 +88,7 @@ impl Jump {
         };
 
         let address = u16::from(lo) | (u16::from(hi) << 8);
-        cpu.program_counter = address.wrapping_add(1);
+        cpu.program_counter = address;
 
         InstructionResult::Ok
     }
@@ -176,7 +178,7 @@ mod test {
             ..Default::default()
         };
 
-        let opcode = Helpers::create_opcode(3, AddressMode::Absolute);
+        let opcode = Helpers::create_opcode(2, AddressMode::Absolute);
 
         assert_eq!(InstructionResult::Ok, Jump::jsr(&opcode, &mut cpu));
 
@@ -184,7 +186,7 @@ mod test {
 
         assert_eq_hex!(0xFD, cpu.stack_pointer);
         assert_eq_hex!(0x12, cpu.memory.read(STACK_BOTTOM + 0xFF));
-        assert_eq_hex!(0x34, cpu.memory.read(STACK_BOTTOM + 0xFE));
+        assert_eq_hex!(0x35, cpu.memory.read(STACK_BOTTOM + 0xFE));
     }
 
     #[test]
@@ -208,7 +210,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, Jump::rts(&mut cpu));
 
-        assert_eq_hex!(0x1235, cpu.program_counter);
+        assert_eq_hex!(0x1234, cpu.program_counter);
     }
 
     #[test]

@@ -38,6 +38,8 @@ impl Decrement {
         }
 
         let address = cpu.get_address(&opcode.address_mode);
+        cpu.program_counter += opcode.bytes as u16;
+
         let memory_value = cpu.memory.read(address);
 
         let decrement_result = Decrement::decrement(cpu, memory_value);

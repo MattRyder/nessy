@@ -136,7 +136,7 @@ lazy_static! {
 
         (0xE8, "INX", 1, 2, AddressMode::Implied, |_, cpu| { Increment::inx(cpu) }),
 
-        (0xE8, "INY", 1, 2, AddressMode::Implied, |_, cpu| { Increment::iny(cpu) }),
+        (0xC8, "INY", 1, 2, AddressMode::Implied, |_, cpu| { Increment::iny(cpu) }),
 
         (0x4C, "JMP", 3, 2, AddressMode::Absolute, |_, cpu| { Jump::jmp(cpu, JumpType::Absolute) }),
         (0x6C, "JMP", 3, 5, AddressMode::None, |_, cpu| { Jump::jmp(cpu, JumpType::Indirect) }),
@@ -245,10 +245,6 @@ lazy_static! {
         (0x9A, "TXS", 1, 2, AddressMode::Implied, |_, cpu| { Transfer::txs(cpu) }),
 
         (0x98, "TYA", 1, 2, AddressMode::Implied, |_, cpu| { Transfer::tya(cpu) }),
-
-
-
-
     );
 }
 
@@ -274,7 +270,7 @@ impl OpCode {
         OpCode {
             opcode,
             mnemonic,
-            bytes,
+            bytes: bytes - 1,
             cycles,
             address_mode,
             execute,
@@ -298,13 +294,13 @@ mod test {
         });
         assert_eq!(0x00, opcode.opcode);
         assert_eq!("BRK", opcode.mnemonic);
-        assert_eq!(1, opcode.bytes);
+        assert_eq!(0, opcode.bytes);
         assert_eq!(7, opcode.cycles);
         assert_eq!(AddressMode::Implied, opcode.address_mode);
     }
 
     #[test]
     fn test_opcodes_count() {
-        assert_eq!(149, OPCODES.len());
+        assert_eq!(150, OPCODES.len());
     }
 }

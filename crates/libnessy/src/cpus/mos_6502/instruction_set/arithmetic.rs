@@ -13,7 +13,11 @@ impl Arithmetic {
     // ADC - Add with Carry
     pub fn adc(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
+
         let m = cpu.memory.read(address);
+
+        cpu.program_counter += opcode.bytes as u16;
+
         let accumulator = cpu.registers.a;
 
         // 1 = no borrow
@@ -49,7 +53,11 @@ impl Arithmetic {
     // and you find that you've got an extra -1 on the result.
     pub fn sbc(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
+
         let m = cpu.memory.read(address);
+
+        cpu.program_counter += opcode.bytes as u16;
+
         let accumulator = cpu.registers.a;
 
         // 1 = no borrow
