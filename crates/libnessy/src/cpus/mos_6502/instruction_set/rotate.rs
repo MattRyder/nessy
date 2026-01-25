@@ -24,7 +24,7 @@ impl Rotate {
             Direction::Right => operand.wrapping_shr(1),
         };
 
-        let carry_bit: u8 = if cpu.status.flags.contains(Flags::CARRY) {
+        let carry_bit: u8 = if cpu.status.contains(Flags::CARRY) {
             1
         } else {
             0
@@ -97,7 +97,7 @@ mod test {
 
         assert_eq_hex!(expected, cpu.registers.a);
 
-        assert_eq!(flags, cpu.status.flags);
+        assert_eq!(flags, cpu.status);
     }
 
     #[parameterized]
@@ -125,6 +125,6 @@ mod test {
 
         assert_eq_hex!(expected, cpu.memory.read(0x02));
 
-        assert_eq!(flags, cpu.status.flags);
+        assert_eq!(flags, cpu.status);
     }
 }

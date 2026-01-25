@@ -96,7 +96,7 @@ mod test {
         Shift::asl_accumulator(&mut cpu);
 
         assert_registers!(cpu, 0x04, 0, 0);
-        assert_eq!(Flags::empty(), cpu.status.flags);
+        assert_eq!(Flags::empty(), cpu.status);
     }
 
     #[test]
@@ -127,7 +127,7 @@ mod test {
         Shift::lsr_accumulator(&mut cpu);
 
         assert_registers!(cpu, 0x01, 0, 0);
-        assert_eq!(Flags::empty(), cpu.status.flags);
+        assert_eq!(Flags::empty(), cpu.status);
     }
 
     #[test]
@@ -145,7 +145,7 @@ mod test {
         Shift::lsr_accumulator(&mut cpu);
 
         assert_registers!(cpu, 0x7F, 0, 0);
-        assert_eq!(Flags::CARRY, cpu.status.flags);
+        assert_eq!(Flags::CARRY, cpu.status);
     }
 
     #[test]

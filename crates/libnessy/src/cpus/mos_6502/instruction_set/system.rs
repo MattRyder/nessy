@@ -11,7 +11,7 @@ pub struct System {}
 impl System {
     // BRK - Force Interrupt
     pub fn brk(cpu: &mut Mos6502) -> InstructionResult {
-        cpu.status.flags |= Flags::BREAK_COMMAND;
+        cpu.status |= Flags::BREAK_COMMAND;
         cpu.program_counter = INTERRUPT_VECTOR;
         InstructionResult::EndProgram
     }
@@ -40,7 +40,7 @@ impl System {
 
         cpu.program_counter = u16::from(lo) | (u16::from(hi) << 8);
 
-        cpu.status.flags = Flags::from_bits_truncate(flags);
+        cpu.status = Flags::from_bits_truncate(flags);
 
         InstructionResult::Ok
     }
@@ -63,7 +63,7 @@ mod tests {
 
         assert_eq!(InstructionResult::EndProgram, System::brk(&mut cpu));
         assert_eq_hex!(INTERRUPT_VECTOR, cpu.program_counter);
-        assert_eq_hex!(Flags::BREAK_COMMAND, cpu.status.flags);
+        assert_eq_hex!(Flags::BREAK_COMMAND, cpu.status);
     }
 
     #[test]
@@ -83,7 +83,7 @@ mod tests {
 
         assert_eq!(
             Flags::CARRY | Flags::NEGATIVE | Flags::ZERO,
-            cpu.status.flags
+            cpu.status
         );
 
         assert_eq_hex!(0xAABB, cpu.program_counter);

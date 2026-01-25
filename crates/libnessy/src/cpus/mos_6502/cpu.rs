@@ -2,7 +2,7 @@ use crate::{
     cpus::mos_6502::{
         memory::{Memory, MemoryAccess, PROGRAM_ROM_START},
         opcode::OPCODES,
-        status::Status,
+        status::Flags,
     },
     interpret_result::{InstructionResult, ProgramResult},
 };
@@ -22,7 +22,7 @@ pub const STACK_POINTER_RESET: u8 = 0xFF;
 #[derive(Default)]
 pub struct Mos6502 {
     pub registers: Registers,
-    pub status: Status,
+    pub status: Flags,
     pub program_counter: u16,
     pub stack_pointer: u8,
     pub memory: Memory,
@@ -38,7 +38,7 @@ impl Mos6502 {
 
     pub fn reset(&mut self) {
         self.registers = Registers::default();
-        self.status = Status::default();
+        self.status = Flags::empty();
         self.program_counter = self.memory.read_u16(RESET_VECTOR);
         self.stack_pointer = STACK_POINTER_RESET;
     }
@@ -103,7 +103,7 @@ mod tests {
         cpu.registers.a = 1;
         cpu.registers.x = 2;
         cpu.registers.y = 3;
-        cpu.status.flags = Flags::all();
+        cpu.status = Flags::all();
 
         cpu.reset();
 
@@ -111,7 +111,7 @@ mod tests {
         assert_eq!(0, cpu.registers.x);
         assert_eq!(0, cpu.registers.y);
 
-        assert_eq!(Flags::empty(), cpu.status.flags);
+        assert_eq!(Flags::empty(), cpu.status);
 
         assert_eq!(0, cpu.program_counter);
     }

@@ -107,7 +107,7 @@ mod test {
 
         assert_eq_hex!(0x00, cpu.memory.read(0x02));
 
-        assert_eq!(Flags::ZERO, cpu.status.flags);
+        assert_eq!(Flags::ZERO, cpu.status);
     }
 
     #[test]
@@ -129,7 +129,7 @@ mod test {
 
         assert_eq_hex!(0x00, cpu.registers.x);
 
-        assert_eq!(Flags::ZERO, cpu.status.flags);
+        assert_eq!(Flags::ZERO, cpu.status);
     }
 
     #[test]
@@ -147,6 +147,6 @@ mod test {
 
         assert_eq_hex!(0xFF, cpu.registers.y);
 
-        assert_eq!(Flags::NEGATIVE, cpu.status.flags);
+        assert_eq!(Flags::NEGATIVE, cpu.status);
     }
 }

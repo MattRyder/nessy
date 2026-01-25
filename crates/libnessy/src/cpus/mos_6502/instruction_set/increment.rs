@@ -78,7 +78,7 @@ mod test {
         Increment::inx(&mut cpu);
 
         assert_eq_hex!(0, cpu.registers.x);
-        assert_eq!(Flags::ZERO, cpu.status.flags);
+        assert_eq!(Flags::ZERO, cpu.status);
     }
 
     #[test]
@@ -97,7 +97,7 @@ mod test {
 
         assert_eq_hex!(0x02, cpu.memory.read(0x55));
 
-        assert_eq!(Flags::empty(), cpu.status.flags);
+        assert_eq!(Flags::empty(), cpu.status);
     }
 
     #[test]
@@ -109,7 +109,7 @@ mod test {
         Increment::inx(&mut cpu);
 
         assert_eq_hex!(0x80, cpu.registers.x);
-        assert_eq!(Flags::NEGATIVE, cpu.status.flags);
+        assert_eq!(Flags::NEGATIVE, cpu.status);
     }
 
     #[test]
@@ -121,7 +121,7 @@ mod test {
         Increment::iny(&mut cpu);
 
         assert_eq_hex!(0, cpu.registers.y);
-        assert_eq!(Flags::ZERO, cpu.status.flags);
+        assert_eq!(Flags::ZERO, cpu.status);
     }
 
     #[test]
@@ -133,6 +133,6 @@ mod test {
         Increment::iny(&mut cpu);
 
         assert_eq_hex!(0x80, cpu.registers.y);
-        assert_eq!(Flags::NEGATIVE, cpu.status.flags);
+        assert_eq!(Flags::NEGATIVE, cpu.status);
     }
 }

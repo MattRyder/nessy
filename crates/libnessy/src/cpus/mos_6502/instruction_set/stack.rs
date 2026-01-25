@@ -61,7 +61,7 @@ impl Stack {
 
     // PHP - Push Processor Status
     pub fn php(cpu: &mut Mos6502) -> InstructionResult {
-        match Stack::push(cpu, cpu.status.flags.bits()) {
+        match Stack::push(cpu, cpu.status.bits()) {
             Err(err) => err,
             _ => InstructionResult::Ok,
         }
@@ -71,7 +71,7 @@ impl Stack {
     pub fn plp(cpu: &mut Mos6502) -> InstructionResult {
         match Stack::pop(cpu) {
             Ok(v) => {
-                cpu.status.flags = Flags::from_bits_truncate(v);
+                cpu.status = Flags::from_bits_truncate(v);
                 InstructionResult::Ok
             }
             Err(err) => err,
@@ -87,7 +87,7 @@ mod test {
     use crate::cpus::mos_6502::{
         cpu::{Mos6502, Registers},
         memory::Memory,
-        status::{Flags, Status},
+        status::Flags,
     };
 
     const STACK_TOP: u16 = 0x01FF;
@@ -161,7 +161,7 @@ mod test {
         let mut cpu = Mos6502 {
             memory: Memory::new_with_bytes(vec![(STACK_TOP as usize, 0xAA)]),
             stack_pointer: 0xFE,
-            status: Status { flags },
+            status: flags,
             ..Default::default()
         };
 
@@ -178,9 +178,7 @@ mod test {
         let mut cpu = Mos6502 {
             memory: Memory::new_with_bytes(vec![(STACK_TOP as usize, 0x83)]),
             stack_pointer: 0xFE,
-            status: Status {
-                flags: Flags::DECIMAL_MODE,
-            },
+            status: Flags::DECIMAL_MODE,
             ..Default::default()
         };
 
@@ -188,9 +186,6 @@ mod test {
 
         assert_eq_hex!(0xFF, cpu.stack_pointer);
 
-        assert_eq!(
-            Flags::CARRY | Flags::ZERO | Flags::NEGATIVE,
-            cpu.status.flags
-        );
+        assert_eq!(Flags::CARRY | Flags::ZERO | Flags::NEGATIVE, cpu.status);
     }
 }

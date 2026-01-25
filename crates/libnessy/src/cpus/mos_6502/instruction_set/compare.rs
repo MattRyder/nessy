@@ -113,7 +113,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(Flags::ZERO | Flags::CARRY, cpu.status.flags);
+        assert_eq_hex!(Flags::ZERO | Flags::CARRY, cpu.status);
     }
 
     #[test]
@@ -135,7 +135,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(Flags::NEGATIVE, cpu.status.flags);
+        assert_eq_hex!(Flags::NEGATIVE, cpu.status);
     }
 
     #[test]
@@ -153,7 +153,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(Flags::ZERO | Flags::CARRY, cpu.status.flags);
+        assert_eq_hex!(Flags::ZERO | Flags::CARRY, cpu.status);
     }
 
     #[test]
@@ -175,7 +175,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(Flags::NEGATIVE, cpu.status.flags);
+        assert_eq_hex!(Flags::NEGATIVE, cpu.status);
     }
 
     #[test]
@@ -193,7 +193,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(Flags::ZERO | Flags::CARRY, cpu.status.flags);
+        assert_eq_hex!(Flags::ZERO | Flags::CARRY, cpu.status);
     }
 
     #[test]
@@ -215,6 +215,6 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(Flags::NEGATIVE, cpu.status.flags);
+        assert_eq_hex!(Flags::NEGATIVE, cpu.status);
     }
 }
