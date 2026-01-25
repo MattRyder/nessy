@@ -22,42 +22,42 @@ impl Branch {
 
     // BCC - Branch if Carry Clear
     pub fn bcc(cpu: &mut Mos6502) -> InstructionResult {
-        Branch::branch_rule(cpu, |cpu| !cpu.status.flags.contains(Flags::CARRY))
+        Branch::branch_rule(cpu, |cpu| !cpu.status.contains(Flags::CARRY))
     }
 
     // BCS - Branch if Carry Set
     pub fn bcs(cpu: &mut Mos6502) -> InstructionResult {
-        Branch::branch_rule(cpu, |cpu| cpu.status.flags.contains(Flags::CARRY))
+        Branch::branch_rule(cpu, |cpu| cpu.status.contains(Flags::CARRY))
     }
 
     // BEQ - Branch if Equal
     pub fn beq(cpu: &mut Mos6502) -> InstructionResult {
-        Branch::branch_rule(cpu, |cpu| cpu.status.flags.contains(Flags::ZERO))
+        Branch::branch_rule(cpu, |cpu| cpu.status.contains(Flags::ZERO))
     }
 
     // BNE - Branch if Not Equal
     pub fn bne(cpu: &mut Mos6502) -> InstructionResult {
-        Branch::branch_rule(cpu, |cpu| !cpu.status.flags.contains(Flags::ZERO))
+        Branch::branch_rule(cpu, |cpu| !cpu.status.contains(Flags::ZERO))
     }
 
     // BMI - Branch if Minus
     pub fn bmi(cpu: &mut Mos6502) -> InstructionResult {
-        Branch::branch_rule(cpu, |cpu| cpu.status.flags.contains(Flags::NEGATIVE))
+        Branch::branch_rule(cpu, |cpu| cpu.status.contains(Flags::NEGATIVE))
     }
 
     // BPL - Branch if Positive
     pub fn bpl(cpu: &mut Mos6502) -> InstructionResult {
-        Branch::branch_rule(cpu, |cpu| !cpu.status.flags.contains(Flags::NEGATIVE))
+        Branch::branch_rule(cpu, |cpu| !cpu.status.contains(Flags::NEGATIVE))
     }
 
     // BVC - Branch if Overflow Clear
     pub fn bvc(cpu: &mut Mos6502) -> InstructionResult {
-        Branch::branch_rule(cpu, |cpu| !cpu.status.flags.contains(Flags::OVERFLOW))
+        Branch::branch_rule(cpu, |cpu| !cpu.status.contains(Flags::OVERFLOW))
     }
 
     // BVS - Branch if Overflow Set
     pub fn bvs(cpu: &mut Mos6502) -> InstructionResult {
-        Branch::branch_rule(cpu, |cpu| cpu.status.flags.contains(Flags::OVERFLOW))
+        Branch::branch_rule(cpu, |cpu| cpu.status.contains(Flags::OVERFLOW))
     }
 }
 
@@ -66,14 +66,14 @@ mod test {
     use assert_hex::assert_eq_hex;
 
     use super::*;
-    use crate::cpus::mos_6502::{cpu::Mos6502, memory::Memory, status::Status};
+    use crate::cpus::mos_6502::{cpu::Mos6502, memory::Memory};
 
     macro_rules! assert_branch_operation {
         ($flags:expr, $expected_pc:expr, $func:expr) => {
             let mut cpu = Mos6502 {
                 memory: Memory::new_with_bytes(vec![(0xAA, 0x02), (0xAB, 0x00)]),
                 program_counter: 0xAA,
-                status: Status { flags: $flags },
+                status: $flags,
                 ..Default::default()
             };
 

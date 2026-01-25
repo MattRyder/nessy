@@ -37,7 +37,7 @@ mod test {
         let result = Set::sec(&mut cpu);
 
         assert_eq!(InstructionResult::Ok, result);
-        assert_eq!(Flags::CARRY, cpu.status.flags);
+        assert_eq!(Flags::CARRY, cpu.status);
     }
 
     #[test]
@@ -47,7 +47,7 @@ mod test {
         let result = Set::sed(&mut cpu);
 
         assert_eq!(InstructionResult::Ok, result);
-        assert_eq!(Flags::DECIMAL_MODE, cpu.status.flags);
+        assert_eq!(Flags::DECIMAL_MODE, cpu.status);
     }
 
     #[test]
@@ -57,6 +57,6 @@ mod test {
         let result = Set::sei(&mut cpu);
 
         assert_eq!(InstructionResult::Ok, result);
-        assert_eq!(Flags::INTERRUPT_DISABLE, cpu.status.flags);
+        assert_eq!(Flags::INTERRUPT_DISABLE, cpu.status);
     }
 }

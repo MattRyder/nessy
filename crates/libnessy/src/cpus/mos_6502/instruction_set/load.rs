@@ -76,8 +76,8 @@ mod test {
         Load::lda(&opcode, &mut cpu);
 
         assert_eq_hex!(0x05, cpu.registers.a);
-        assert_eq!(Flags::empty(), cpu.status.flags & Flags::ZERO);
-        assert_eq!(Flags::empty(), cpu.status.flags & Flags::NEGATIVE);
+        assert_eq!(Flags::empty(), cpu.status & Flags::ZERO);
+        assert_eq!(Flags::empty(), cpu.status & Flags::NEGATIVE);
     }
 
     #[test]
@@ -89,7 +89,7 @@ mod test {
 
         Load::lda(&opcode, &mut cpu);
 
-        assert_eq!(Flags::ZERO, cpu.status.flags);
+        assert_eq!(Flags::ZERO, cpu.status);
     }
 
     #[test]
@@ -101,8 +101,8 @@ mod test {
         Load::ldx(&opcode, &mut cpu);
 
         assert_eq_hex!(0x05, cpu.registers.x);
-        assert_eq!(Flags::empty(), cpu.status.flags & Flags::ZERO);
-        assert_eq!(Flags::empty(), cpu.status.flags & Flags::NEGATIVE);
+        assert_eq!(Flags::empty(), cpu.status & Flags::ZERO);
+        assert_eq!(Flags::empty(), cpu.status & Flags::NEGATIVE);
     }
 
     #[test]
@@ -113,7 +113,7 @@ mod test {
 
         Load::ldx(&opcode, &mut cpu);
 
-        assert_eq!(Flags::NEGATIVE, cpu.status.flags);
+        assert_eq!(Flags::NEGATIVE, cpu.status);
     }
 
     #[test]
@@ -125,8 +125,8 @@ mod test {
         Load::ldy(&opcode, &mut cpu);
 
         assert_eq_hex!(0x05, cpu.registers.y);
-        assert_eq!(Flags::empty(), cpu.status.flags & Flags::ZERO);
-        assert_eq!(Flags::empty(), cpu.status.flags & Flags::NEGATIVE);
+        assert_eq!(Flags::empty(), cpu.status & Flags::ZERO);
+        assert_eq!(Flags::empty(), cpu.status & Flags::NEGATIVE);
     }
 
     #[test]
@@ -137,6 +137,6 @@ mod test {
 
         Load::ldy(&opcode, &mut cpu);
 
-        assert_eq!(Flags::NEGATIVE, cpu.status.flags);
+        assert_eq!(Flags::NEGATIVE, cpu.status);
     }
 }

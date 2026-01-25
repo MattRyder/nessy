@@ -107,7 +107,7 @@ mod test {
         Logical::and(&opcode, &mut cpu);
 
         assert_eq_hex!(0x01, cpu.registers.a);
-        assert_eq!(Flags::empty(), cpu.status.flags);
+        assert_eq!(Flags::empty(), cpu.status);
     }
 
     #[test]
@@ -130,7 +130,7 @@ mod test {
 
         Logical::and(&opcode, &mut cpu);
 
-        assert_eq!(Flags::ZERO, cpu.status.flags & Flags::ZERO);
+        assert_eq!(Flags::ZERO, cpu.status & Flags::ZERO);
     }
 
     #[test]
@@ -151,8 +151,8 @@ mod test {
         Logical::ora(&opcode, &mut cpu);
 
         assert_eq_hex!(0x3B, cpu.registers.a);
-        assert_eq!(Flags::empty(), cpu.status.flags & Flags::ZERO);
-        assert_eq!(Flags::empty(), cpu.status.flags & Flags::NEGATIVE);
+        assert_eq!(Flags::empty(), cpu.status & Flags::ZERO);
+        assert_eq!(Flags::empty(), cpu.status & Flags::NEGATIVE);
     }
 
     #[test]
@@ -173,7 +173,7 @@ mod test {
         Logical::bit(&opcode, &mut cpu);
 
         assert_eq_hex!(0x7F, cpu.registers.a);
-        assert_eq!(Flags::OVERFLOW | Flags::NEGATIVE, cpu.status.flags);
+        assert_eq!(Flags::OVERFLOW | Flags::NEGATIVE, cpu.status);
     }
 
     #[test]
@@ -194,6 +194,6 @@ mod test {
         Logical::bit(&opcode, &mut cpu);
 
         assert_eq_hex!(0x00, cpu.registers.a);
-        assert_eq!(Flags::ZERO, cpu.status.flags);
+        assert_eq!(Flags::ZERO, cpu.status);
     }
 }

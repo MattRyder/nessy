@@ -22,7 +22,7 @@ impl Arithmetic {
 
         // 1 = no borrow
         // 0 = borrow
-        let carry = if cpu.status.flags.contains(Flags::CARRY) {
+        let carry = if cpu.status.contains(Flags::CARRY) {
             1
         } else {
             0
@@ -62,7 +62,7 @@ impl Arithmetic {
 
         // 1 = no borrow
         // 0 = borrow
-        let carry = if cpu.status.flags.contains(Flags::CARRY) {
+        let carry = if cpu.status.contains(Flags::CARRY) {
             1
         } else {
             0
@@ -98,7 +98,7 @@ mod test {
     use crate::{
         cpus::mos_6502::{
             address_mode::AddressMode, cpu::Registers, instruction_set::helpers::Helpers,
-            memory::Memory, status::Status,
+            memory::Memory,
         },
         interpret_result::InstructionResult,
     };
@@ -116,7 +116,7 @@ mod test {
         let mut cpu = Mos6502 {
             memory: Memory::new_with_bytes(vec![(0xAA, 0x02), (0x02, 0x01)]),
             program_counter: 0xAA,
-            status: Status { flags: cpu_flags },
+            status: cpu_flags,
             registers: Registers {
                 a: 0x01,
                 x: 0,
@@ -133,7 +133,7 @@ mod test {
 
         assert_eq_hex!(expected_accumulator, cpu.registers.a);
 
-        assert_eq!(expected_flags, cpu.status.flags);
+        assert_eq!(expected_flags, cpu.status);
     }
 
     #[parameterized]
@@ -152,7 +152,7 @@ mod test {
         let mut cpu = Mos6502 {
             memory: Memory::new_with_bytes(vec![(0xAA, 0x02), (0x02, memory_value)]),
             program_counter: 0xAA,
-            status: Status { flags: cpu_flags },
+            status: cpu_flags,
             registers: Registers {
                 a: accumulator,
                 x: 0,
@@ -169,6 +169,6 @@ mod test {
 
         assert_eq_hex!(expected_accumulator, cpu.registers.a);
 
-        assert_eq!(expected_flags, cpu.status.flags);
+        assert_eq!(expected_flags, cpu.status);
     }
 }

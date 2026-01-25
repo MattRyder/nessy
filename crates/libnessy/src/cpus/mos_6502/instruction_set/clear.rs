@@ -8,25 +8,25 @@ pub struct Clear {}
 impl Clear {
     // CLC - Clear Carry Flag
     pub fn clc(cpu: &mut Mos6502) -> InstructionResult {
-        cpu.status.flags.remove(Flags::CARRY);
+        cpu.status.remove(Flags::CARRY);
         InstructionResult::Ok
     }
 
     // CLD - Clear Decimal Mode
     pub fn cld(cpu: &mut Mos6502) -> InstructionResult {
-        cpu.status.flags.remove(Flags::DECIMAL_MODE);
+        cpu.status.remove(Flags::DECIMAL_MODE);
         InstructionResult::Ok
     }
 
     // CLI - Clear Interrupt Disable
     pub fn cli(cpu: &mut Mos6502) -> InstructionResult {
-        cpu.status.flags.remove(Flags::INTERRUPT_DISABLE);
+        cpu.status.remove(Flags::INTERRUPT_DISABLE);
         InstructionResult::Ok
     }
 
     // CLV - Clear Overflow Flag
     pub fn clv(cpu: &mut Mos6502) -> InstructionResult {
-        cpu.status.flags.remove(Flags::OVERFLOW);
+        cpu.status.remove(Flags::OVERFLOW);
         InstructionResult::Ok
     }
 }
@@ -34,7 +34,7 @@ impl Clear {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::cpus::mos_6502::status::{Flags, Status};
+    use crate::cpus::mos_6502::status::Flags;
     use assert_hex::assert_eq_hex;
 
     // Set the expected flag, and a canary flag to make sure
@@ -42,15 +42,13 @@ mod test {
     macro_rules! assert_flag_clear {
         ($clear_flag:expr, $canary_flag:expr, $func:expr) => {
             let mut cpu = Mos6502 {
-                status: Status {
-                    flags: $clear_flag | $canary_flag,
-                },
+                status: $clear_flag | $canary_flag,
                 ..Default::default()
             };
 
             assert_eq!(InstructionResult::Ok, ($func)(&mut cpu));
 
-            assert_eq_hex!($canary_flag, cpu.status.flags);
+            assert_eq_hex!($canary_flag, cpu.status);
         };
     }
 
