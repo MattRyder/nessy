@@ -37,12 +37,12 @@ impl Increment {
         }
 
         let address = cpu.get_address(&opcode.address_mode);
-        let memory_value = cpu.memory.read(address);
+        let memory_value = cpu.bus.read(address);
         cpu.program_counter += opcode.bytes as u16;
 
         let result = Increment::increment(cpu, memory_value);
 
-        cpu.memory.write(address, result);
+        cpu.bus.write(address, result);
 
         InstructionResult::Ok
     }
@@ -65,29 +65,21 @@ impl Increment {
 #[cfg(test)]
 mod test {
     use assert_hex::assert_eq_hex;
+    use sif::parameterized;
 
     use super::*;
-    use crate::cpus::mos_6502::{cpu::Mos6502, instruction_set::helpers::Helpers, memory::Memory};
 
-    #[test]
-    fn test_inx_overflows() {
-        let mut cpu = Mos6502::default();
-
-        cpu.registers.x = 0xFF;
-
-        Increment::inx(&mut cpu);
-
-        assert_eq_hex!(0, cpu.registers.x);
-        assert_eq!(Flags::ZERO, cpu.status);
-    }
+    use crate::cpus::mos_6502::{cpu::Mos6502, instruction_set::helpers::Helpers};
 
     #[test]
     fn test_inc_increments_memory_value() {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x55), (0x55, 0x01)]),
-            program_counter: 0xAA,
-            ..Default::default()
-        };
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            Some(vec![(0xAA, 0x55), (0x55, 0x01)]),
+            None,
+            None,
+        );
 
         let opcode = Helpers::create_opcode(2, AddressMode::ZeroPage);
 
@@ -95,44 +87,36 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(0x02, cpu.memory.read(0x55));
+        assert_eq_hex!(0x02, cpu.bus.read(0x55));
 
         assert_eq!(Flags::empty(), cpu.status);
     }
 
-    #[test]
-    fn test_inx_sets_negative_flag() {
+    #[parameterized]
+    #[case(0xFF, 0, Flags::ZERO)]
+    #[case(0x7F, 0x80, Flags::NEGATIVE)]
+    fn test_inx(x_reg: u8, expected_x_reg: u8, expected_flags: Flags) {
         let mut cpu = Mos6502::default();
 
-        cpu.registers.x = 0x7F;
+        cpu.registers.x = x_reg;
 
         Increment::inx(&mut cpu);
 
-        assert_eq_hex!(0x80, cpu.registers.x);
-        assert_eq!(Flags::NEGATIVE, cpu.status);
+        assert_eq_hex!(expected_x_reg, cpu.registers.x);
+        assert_eq!(expected_flags, cpu.status);
     }
 
-    #[test]
-    fn test_iny_overflows() {
+    #[parameterized]
+    #[case(0xFF, 0, Flags::ZERO)]
+    #[case(0x7F, 0x80, Flags::NEGATIVE)]
+    fn test_iny(y_reg: u8, expected_y_reg: u8, expected_flags: Flags) {
         let mut cpu = Mos6502::default();
 
-        cpu.registers.y = 0xFF;
+        cpu.registers.y = y_reg;
 
         Increment::iny(&mut cpu);
 
-        assert_eq_hex!(0, cpu.registers.y);
-        assert_eq!(Flags::ZERO, cpu.status);
-    }
-
-    #[test]
-    fn test_iny_sets_negative_flag() {
-        let mut cpu = Mos6502::default();
-
-        cpu.registers.y = 0x7F;
-
-        Increment::iny(&mut cpu);
-
-        assert_eq_hex!(0x80, cpu.registers.y);
-        assert_eq!(Flags::NEGATIVE, cpu.status);
+        assert_eq_hex!(expected_y_reg, cpu.registers.y);
+        assert_eq!(expected_flags, cpu.status);
     }
 }

@@ -14,7 +14,7 @@ impl Arithmetic {
     pub fn adc(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        let m = cpu.memory.read(address);
+        let m = cpu.bus.read(address);
 
         cpu.program_counter += opcode.bytes as u16;
 
@@ -54,7 +54,7 @@ impl Arithmetic {
     pub fn sbc(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        let m = cpu.memory.read(address);
+        let m = cpu.bus.read(address);
 
         cpu.program_counter += opcode.bytes as u16;
 
@@ -98,7 +98,6 @@ mod test {
     use crate::{
         cpus::mos_6502::{
             address_mode::AddressMode, cpu::Registers, instruction_set::helpers::Helpers,
-            memory::Memory,
         },
         interpret_result::InstructionResult,
     };
@@ -113,17 +112,19 @@ mod test {
         expected_accumulator: u8,
         expected_flags: Flags,
     ) {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x02), (0x02, 0x01)]),
-            program_counter: 0xAA,
-            status: cpu_flags,
-            registers: Registers {
-                a: 0x01,
-                x: 0,
-                y: 0,
-            },
-            ..Default::default()
+        let registers = Registers {
+            a: 0x01,
+            x: 0,
+            y: 0,
         };
+
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            Some(vec![(0xAA, 0x02), (0x02, 0x01)]),
+            Some(registers),
+            Some(cpu_flags),
+        );
 
         let opcode = Helpers::create_opcode(2, AddressMode::ZeroPage);
 
@@ -149,17 +150,19 @@ mod test {
         expected_accumulator: u8,
         expected_flags: Flags,
     ) {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x02), (0x02, memory_value)]),
-            program_counter: 0xAA,
-            status: cpu_flags,
-            registers: Registers {
-                a: accumulator,
-                x: 0,
-                y: 0,
-            },
-            ..Default::default()
+        let registers = Registers {
+            a: accumulator,
+            x: 0,
+            y: 0,
         };
+
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            Some(vec![(0xAA, 0x02), (0x02, memory_value)]),
+            Some(registers),
+            Some(cpu_flags),
+        );
 
         let opcode = Helpers::create_opcode(2, AddressMode::ZeroPage);
 

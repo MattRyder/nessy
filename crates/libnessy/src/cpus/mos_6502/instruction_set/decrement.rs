@@ -40,11 +40,11 @@ impl Decrement {
         let address = cpu.get_address(&opcode.address_mode);
         cpu.program_counter += opcode.bytes as u16;
 
-        let memory_value = cpu.memory.read(address);
+        let memory_value = cpu.bus.read(address);
 
         let decrement_result = Decrement::decrement(cpu, memory_value);
 
-        cpu.memory.write(address, decrement_result);
+        cpu.bus.write(address, decrement_result);
 
         InstructionResult::Ok
     }
@@ -85,7 +85,7 @@ mod test {
             address_mode::AddressMode,
             cpu::{Mos6502, Registers},
             instruction_set::{decrement::Decrement, helpers::Helpers},
-            memory::{Memory, MemoryAccess},
+            memory::MemoryAccess,
             status::Flags,
         },
         interpret_result::InstructionResult,
@@ -93,11 +93,13 @@ mod test {
 
     #[test]
     fn test_dec_decrements_memory_value() {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x02), (0x02, 0x01)]),
-            program_counter: 0xAA,
-            ..Default::default()
-        };
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            Some(vec![(0xAA, 0x02), (0x02, 0x01)]),
+            None,
+            None,
+        );
 
         let opcode = Helpers::create_opcode(2, AddressMode::ZeroPage);
 
@@ -105,7 +107,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(0x00, cpu.memory.read(0x02));
+        assert_eq_hex!(0x00, cpu.bus.read(0x02));
 
         assert_eq!(Flags::ZERO, cpu.status);
     }

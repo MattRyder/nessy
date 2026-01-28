@@ -10,7 +10,7 @@ impl Branch {
     where
         F: Fn(&mut Mos6502) -> bool,
     {
-        let offset = cpu.memory.read(cpu.program_counter) as i8;
+        let offset = cpu.bus.read(cpu.program_counter) as i8;
         cpu.program_counter += 1;
 
         if predicate(cpu) {
@@ -66,16 +66,18 @@ mod test {
     use assert_hex::assert_eq_hex;
 
     use super::*;
-    use crate::cpus::mos_6502::{cpu::Mos6502, memory::Memory};
+
+    use crate::cpus::mos_6502::instruction_set::helpers::Helpers;
 
     macro_rules! assert_branch_operation {
         ($flags:expr, $expected_pc:expr, $func:expr) => {
-            let mut cpu = Mos6502 {
-                memory: Memory::new_with_bytes(vec![(0xAA, 0x02), (0xAB, 0x00)]),
-                program_counter: 0xAA,
-                status: $flags,
-                ..Default::default()
-            };
+            let mut cpu = Helpers::create_cpu(
+                0xAA,
+                0x0,
+                Some(vec![(0xAA, 0x02), (0xAB, 0x00)]),
+                None,
+                Some($flags),
+            );
 
             ($func)(&mut cpu);
 

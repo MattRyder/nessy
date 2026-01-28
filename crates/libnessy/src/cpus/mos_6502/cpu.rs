@@ -1,6 +1,7 @@
 use crate::{
     cpus::mos_6502::{
-        memory::{Memory, MemoryAccess, PROGRAM_ROM_START},
+        bus::Bus,
+        memory::{MemoryAccess, PROGRAM_ROM_START},
         opcode::OPCODES,
         status::Flags,
     },
@@ -25,7 +26,7 @@ pub struct Mos6502 {
     pub status: Flags,
     pub program_counter: u16,
     pub stack_pointer: u8,
-    pub memory: Memory,
+    pub bus: Bus,
 }
 
 impl Mos6502 {
@@ -39,13 +40,13 @@ impl Mos6502 {
     pub fn reset(&mut self) {
         self.registers = Registers::default();
         self.status = Flags::empty();
-        self.program_counter = self.memory.read_u16(RESET_VECTOR);
+        self.program_counter = self.bus.read_u16(RESET_VECTOR);
         self.stack_pointer = STACK_POINTER_RESET;
     }
 
     pub fn load_program(&mut self, program: &[u8]) {
-        self.memory.write_slice(PROGRAM_ROM_START, program);
-        self.memory.write_u16(RESET_VECTOR, PROGRAM_ROM_START);
+        self.bus.write_slice(PROGRAM_ROM_START, program);
+        self.bus.write_u16(RESET_VECTOR, PROGRAM_ROM_START);
     }
 
     pub fn run(&mut self) -> ProgramResult {
@@ -59,7 +60,7 @@ impl Mos6502 {
         loop {
             callback(self);
 
-            let opcode_byte = self.memory.read(self.program_counter);
+            let opcode_byte = self.bus.read(self.program_counter);
             self.program_counter += 1;
 
             match OPCODES.get(&opcode_byte) {

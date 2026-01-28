@@ -20,7 +20,7 @@ impl Renderer {
         let mut frame_index = 0;
 
         for i in 0x0200..0x600 {
-            let pixel_byte = cpu.memory.read(i as u16);
+            let pixel_byte = cpu.bus.read(i as u16);
             let (b1, b2, b3) = Colour::from_u8(pixel_byte).rgb();
 
             if self.buffer[frame_index] != b1

@@ -17,7 +17,7 @@ impl Load {
     pub fn lda(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        cpu.registers.a = cpu.memory.read(address);
+        cpu.registers.a = cpu.bus.read(address);
         Load::set_flags(cpu, cpu.registers.a);
 
         cpu.program_counter += opcode.bytes as u16;
@@ -29,7 +29,7 @@ impl Load {
     pub fn ldx(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        cpu.registers.x = cpu.memory.read(address);
+        cpu.registers.x = cpu.bus.read(address);
         Load::set_flags(cpu, cpu.registers.x);
 
         cpu.program_counter += opcode.bytes as u16;
@@ -41,7 +41,7 @@ impl Load {
     pub fn ldy(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        cpu.registers.y = cpu.memory.read(address);
+        cpu.registers.y = cpu.bus.read(address);
         Load::set_flags(cpu, cpu.registers.y);
 
         cpu.program_counter += opcode.bytes as u16;
@@ -56,15 +56,19 @@ mod test {
 
     use super::*;
     use crate::cpus::mos_6502::{
-        address_mode::AddressMode, instruction_set::helpers::Helpers, memory::Memory, status::Flags,
+        address_mode::AddressMode, bus::Bus, instruction_set::helpers::Helpers, status::Flags,
     };
 
     fn create_cpu(memory_value: u8) -> Mos6502 {
-        Mos6502 {
-            memory: Memory::new_with_bytes(vec![(0xAA, memory_value)]),
+        let mut cpu = Mos6502 {
+            bus: Bus::default(),
             program_counter: 0xAA,
             ..Default::default()
-        }
+        };
+
+        cpu.bus.write(0xAA, memory_value);
+
+        cpu
     }
 
     #[test]
@@ -83,7 +87,7 @@ mod test {
     #[test]
     fn test_lda_zero_flag_set() {
         let mut cpu = create_cpu(0x00);
-        cpu.memory.write(0xAA, 0x00);
+        cpu.bus.write(0xAA, 0x00);
 
         let opcode = Helpers::create_opcode(1, AddressMode::Immediate);
 

@@ -51,7 +51,7 @@ mod tests {
     use assert_hex::assert_eq_hex;
 
     use crate::{
-        cpus::mos_6502::{cpu::Mos6502, memory::Memory},
+        cpus::mos_6502::{cpu::Mos6502, instruction_set::helpers::Helpers},
         interpret_result::InstructionResult,
     };
 
@@ -73,18 +73,17 @@ mod tests {
 
     #[test]
     fn test_rti_sets_flags_and_pc() {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(0x01FF, 0xAA), (0x01FE, 0xBB), (0x01FD, 0x83)]),
-            stack_pointer: 0xFC,
-            ..Default::default()
-        };
+        let mut cpu = Helpers::create_cpu(
+            0x0,
+            0xFC,
+            Some(vec![(0x01FF, 0xAA), (0x01FE, 0xBB), (0x01FD, 0x83)]),
+            None,
+            None,
+        );
 
         assert_eq!(InstructionResult::Ok, System::rti(&mut cpu));
 
-        assert_eq!(
-            Flags::CARRY | Flags::NEGATIVE | Flags::ZERO,
-            cpu.status
-        );
+        assert_eq!(Flags::CARRY | Flags::NEGATIVE | Flags::ZERO, cpu.status);
 
         assert_eq_hex!(0xAABB, cpu.program_counter);
 

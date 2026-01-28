@@ -26,20 +26,20 @@ impl Jump {
             }
             JumpType::Indirect => {
                 // First address
-                let ptr_lo = cpu.memory.read(cpu.program_counter);
+                let ptr_lo = cpu.bus.read(cpu.program_counter);
                 cpu.program_counter = cpu.program_counter.wrapping_add(1);
-                let ptr_hi = cpu.memory.read(cpu.program_counter);
+                let ptr_hi = cpu.bus.read(cpu.program_counter);
                 cpu.program_counter = cpu.program_counter.wrapping_add(1);
 
                 // Form 16-bit ptr address
                 let ptr = u16::from(ptr_lo) | (u16::from(ptr_hi) << 8);
 
                 // Get the indirect jump's lo byte of the address
-                let jump_target_lo = cpu.memory.read(ptr);
+                let jump_target_lo = cpu.bus.read(ptr);
 
                 // Build up the high byte of the jump target
                 let hi_address = (ptr & 0xFF00) | ((ptr.wrapping_add(1)) & 0x00FF);
-                let jump_target_hi = cpu.memory.read(hi_address);
+                let jump_target_hi = cpu.bus.read(hi_address);
 
                 cpu.program_counter = u16::from(jump_target_lo) | (u16::from(jump_target_hi) << 8);
             }
@@ -97,63 +97,39 @@ impl Jump {
 #[cfg(test)]
 mod test {
     use assert_hex::assert_eq_hex;
+    use sif::parameterized;
 
     use super::*;
     use crate::cpus::mos_6502::{
         cpu::Mos6502,
         instruction_set::{helpers::Helpers, stack::STACK_BOTTOM},
-        memory::Memory,
     };
 
-    #[test]
-    fn test_jmp_with_absolute_sets_pc_to_address() {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(0x0A, 0x00), (0x0B, 0x80)]),
-            program_counter: 0x0A,
-            ..Default::default()
-        };
+    #[parameterized]
+    #[case(vec![(0x0A, 0x00), (0x0B, 0x80)], JumpType::Absolute, 0x8000)]
+    #[case(vec![(0x0A, 0x00), (0x0B, 0x0F), (0x0F00, 0x0B), (0x0F01, 0x0A)], JumpType::Indirect, 0x0A0B)]
+    fn test_jmp(memory: Vec<(u16, u8)>, jump_type: JumpType, expected_pc: u16) {
+        let mut cpu = Helpers::create_cpu(0x0A, 0x0, Some(memory), None, None);
 
-        assert_eq!(
-            InstructionResult::Ok,
-            Jump::jmp(&mut cpu, JumpType::Absolute)
-        );
+        assert_eq!(InstructionResult::Ok, Jump::jmp(&mut cpu, jump_type));
 
-        assert_eq_hex!(0x8000, cpu.program_counter);
-    }
-
-    #[test]
-    fn test_jmp_with_indirect_sets_pc_to_address() {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![
-                (0x0A, 0x00),
-                (0x0B, 0x0F),
-                (0x0F00, 0x0B),
-                (0x0F01, 0x0A),
-            ]),
-            program_counter: 0x0A,
-            ..Default::default()
-        };
-
-        assert_eq!(
-            InstructionResult::Ok,
-            Jump::jmp(&mut cpu, JumpType::Indirect)
-        );
-
-        assert_eq_hex!(0x0A0B, cpu.program_counter);
+        assert_eq_hex!(expected_pc, cpu.program_counter);
     }
 
     #[test]
     fn test_jmp_with_indirect_sets_pc_to_address_given_page_boundary_bug() {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![
+        let mut cpu = Helpers::create_cpu(
+            0x0A,
+            0x0,
+            Some(vec![
                 (0x0A, 0xFF),
                 (0x0B, 0x01),
                 (0x01FF, 0x34),
                 (0x0100, 0x12),
             ]),
-            program_counter: 0x0A,
-            ..Default::default()
-        };
+            None,
+            None,
+        );
 
         assert_eq!(
             InstructionResult::Ok,
@@ -165,18 +141,18 @@ mod test {
 
     #[test]
     fn test_jsr_works() {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![
+        let mut cpu = Helpers::create_cpu(
+            0x1234,
+            0xFF,
+            Some(vec![
                 (0x1234, 0xFF),
                 (0x1235, 0x01),
                 (0x01FF, 0x34),
                 (0x0100, 0x12),
             ]),
-
-            program_counter: 0x1234,
-            stack_pointer: 0xFF,
-            ..Default::default()
-        };
+            None,
+            None,
+        );
 
         let opcode = Helpers::create_opcode(2, AddressMode::Absolute);
 
@@ -185,8 +161,8 @@ mod test {
         assert_eq_hex!(0x01FF, cpu.program_counter);
 
         assert_eq_hex!(0xFD, cpu.stack_pointer);
-        assert_eq_hex!(0x12, cpu.memory.read(STACK_BOTTOM + 0xFF));
-        assert_eq_hex!(0x35, cpu.memory.read(STACK_BOTTOM + 0xFE));
+        assert_eq_hex!(0x12, cpu.bus.read(STACK_BOTTOM + 0xFF));
+        assert_eq_hex!(0x35, cpu.bus.read(STACK_BOTTOM + 0xFE));
     }
 
     #[test]
@@ -202,11 +178,13 @@ mod test {
 
     #[test]
     fn test_rts_given_valid_stack_sets_pc_to_stack_address() {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(0x01FF, 0x12), (0x01FE, 0x34)]),
-            stack_pointer: 0xFD,
-            ..Default::default()
-        };
+        let mut cpu = Helpers::create_cpu(
+            0x0,
+            0xFD,
+            Some(vec![(0x01FF, 0x12), (0x01FE, 0x34)]),
+            None,
+            None,
+        );
 
         assert_eq!(InstructionResult::Ok, Jump::rts(&mut cpu));
 

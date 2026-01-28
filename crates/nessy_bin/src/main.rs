@@ -95,8 +95,7 @@ fn main() {
             std::process::exit(0);
         }
 
-        cpu.memory
-            .write(MEMORY_ADDRESS_RNG, rng.random_range(1..16));
+        cpu.bus.write(MEMORY_ADDRESS_RNG, rng.random_range(1..16));
 
         if renderer.handle(cpu) {
             graphics_system.clear();

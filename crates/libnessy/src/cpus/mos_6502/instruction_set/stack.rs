@@ -17,7 +17,7 @@ impl Stack {
     pub fn push(cpu: &mut Mos6502, operand: u8) -> Result<(), InstructionResult> {
         let stack_address = STACK_BOTTOM + cpu.stack_pointer as u16;
 
-        cpu.memory.write(stack_address, operand);
+        cpu.bus.write(stack_address, operand);
 
         if cpu.stack_pointer == 0 {
             Err(InstructionResult::StackOverflow)
@@ -34,7 +34,7 @@ impl Stack {
 
         let stack_address = STACK_BOTTOM + (cpu.stack_pointer as u16 + 1);
 
-        let result = cpu.memory.read(stack_address);
+        let result = cpu.bus.read(stack_address);
 
         cpu.stack_pointer += 1;
         Ok(result)
@@ -86,7 +86,7 @@ mod test {
     use super::*;
     use crate::cpus::mos_6502::{
         cpu::{Mos6502, Registers},
-        memory::Memory,
+        instruction_set::helpers::Helpers,
         status::Flags,
     };
 
@@ -94,22 +94,25 @@ mod test {
 
     #[test]
     fn test_pha_pops_stack_into_accumulator() {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(STACK_TOP as usize, 0xAA)]),
-            registers: Registers {
-                a: 0xDD,
-                x: 0,
-                y: 0,
-            },
-            stack_pointer: 0xFE,
-            ..Default::default()
+        let registers = Registers {
+            a: 0xDD,
+            x: 0,
+            y: 0,
         };
+
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0xFE,
+            Some(vec![(STACK_TOP, 0xAA)]),
+            Some(registers),
+            None,
+        );
 
         assert_eq!(InstructionResult::Ok, Stack::pha(&mut cpu));
 
         assert_eq_hex!(0xFD, cpu.stack_pointer);
 
-        assert_eq_hex!(0xDD, cpu.memory.read(STACK_TOP - 1));
+        assert_eq_hex!(0xDD, cpu.bus.read(STACK_TOP - 1));
     }
 
     #[test]
@@ -130,11 +133,7 @@ mod test {
     #[test]
     fn test_pla_pushes_to_stack() {
         // Test with a used stack.
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(STACK_TOP as usize, 0xAA)]),
-            stack_pointer: 0xFE,
-            ..Default::default()
-        };
+        let mut cpu = Helpers::create_cpu(0x0, 0xFE, Some(vec![(STACK_TOP, 0xAA)]), None, None);
 
         assert_eq!(InstructionResult::Ok, Stack::pla(&mut cpu));
 
@@ -158,29 +157,27 @@ mod test {
         let flags = Flags::CARRY | Flags::ZERO | Flags::NEGATIVE;
 
         // Test with a used stack.
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(STACK_TOP as usize, 0xAA)]),
-            stack_pointer: 0xFE,
-            status: flags,
-            ..Default::default()
-        };
+        let mut cpu =
+            Helpers::create_cpu(0x0, 0xFE, Some(vec![(STACK_TOP, 0xAA)]), None, Some(flags));
 
         assert_eq!(InstructionResult::Ok, Stack::php(&mut cpu));
 
         assert_eq_hex!(0xFD, cpu.stack_pointer);
 
-        let stack_flags = Flags::from_bits_truncate(cpu.memory.read(0x01FE));
+        let stack_flags = Flags::from_bits_truncate(cpu.bus.read(0x01FE));
         assert_eq!(flags, stack_flags);
     }
 
     #[test]
     fn test_plp_pops_flags_from_stack() {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(STACK_TOP as usize, 0x83)]),
-            stack_pointer: 0xFE,
-            status: Flags::DECIMAL_MODE,
-            ..Default::default()
-        };
+        // Test with a used stack.
+        let mut cpu = Helpers::create_cpu(
+            0x0,
+            0xFE,
+            Some(vec![(STACK_TOP, 0x83)]),
+            None,
+            Some(Flags::DECIMAL_MODE),
+        );
 
         assert_eq!(InstructionResult::Ok, Stack::plp(&mut cpu));
 
