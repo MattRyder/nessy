@@ -52,12 +52,12 @@ impl Rotate {
         direction: Direction,
     ) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
-        let memory_value = cpu.memory.read(address);
+        let memory_value = cpu.bus.read(address);
         cpu.program_counter += opcode.bytes as u16;
 
         let result = Rotate::rotate(cpu, direction, memory_value);
 
-        cpu.memory.write(address, result);
+        cpu.bus.write(address, result);
 
         InstructionResult::Ok
     }
@@ -70,10 +70,7 @@ mod test {
 
     use super::*;
     use crate::cpus::mos_6502::{
-        address_mode::AddressMode,
-        cpu::{Mos6502, Registers},
-        instruction_set::helpers::Helpers,
-        memory::Memory,
+        address_mode::AddressMode, cpu::Registers, instruction_set::helpers::Helpers,
     };
 
     #[parameterized]
@@ -82,14 +79,17 @@ mod test {
     #[case(0xFF, Direction::Left, 0xFE, Flags::CARRY | Flags::NEGATIVE)]
     #[case(0xFF, Direction::Right, 0x7E, Flags::CARRY)]
     fn test_rotate_accumulator(accumulator: u8, direction: Direction, expected: u8, flags: Flags) {
-        let mut cpu = Mos6502 {
-            registers: Registers {
+        let mut cpu = Helpers::create_cpu(
+            0x0,
+            0x0,
+            Some(vec![(0xAA, 0x02), (0x02, 0x00)]),
+            Some(Registers {
                 a: accumulator,
                 x: 0,
                 y: 0,
-            },
-            ..Default::default()
-        };
+            }),
+            None,
+        );
 
         let result = Rotate::rotate_accumulator(&mut cpu, direction);
 
@@ -106,16 +106,13 @@ mod test {
     #[case(0xFF, Direction::Left, 0xFE, Flags::CARRY | Flags::NEGATIVE)]
     #[case(0xFF, Direction::Right, 0x7E, Flags::CARRY)]
     fn test_rotate_memory(mem_value: u8, direction: Direction, expected: u8, flags: Flags) {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x02), (0x02, mem_value)]),
-            program_counter: 0xAA,
-            registers: Registers {
-                a: 0x01,
-                x: 0,
-                y: 0,
-            },
-            ..Default::default()
-        };
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            Some(vec![(0xAA, 0x02), (0x02, mem_value)]),
+            None,
+            None,
+        );
 
         let opcode = Helpers::create_opcode(2, AddressMode::ZeroPage);
 
@@ -123,7 +120,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(expected, cpu.memory.read(0x02));
+        assert_eq_hex!(expected, cpu.bus.read(0x02));
 
         assert_eq!(flags, cpu.status);
     }

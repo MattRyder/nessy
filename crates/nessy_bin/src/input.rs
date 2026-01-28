@@ -33,19 +33,19 @@ impl Input {
                 Event::KeyDown {
                     keycode: Some(Keycode::W),
                     ..
-                } => cpu.memory.write(INPUT_MEMORY_ADDRESS, KEY_W_KEYCODE),
+                } => cpu.bus.write(INPUT_MEMORY_ADDRESS, KEY_W_KEYCODE),
                 Event::KeyDown {
                     keycode: Some(Keycode::S),
                     ..
-                } => cpu.memory.write(INPUT_MEMORY_ADDRESS, KEY_S_KEYCODE),
+                } => cpu.bus.write(INPUT_MEMORY_ADDRESS, KEY_S_KEYCODE),
                 Event::KeyDown {
                     keycode: Some(Keycode::A),
                     ..
-                } => cpu.memory.write(INPUT_MEMORY_ADDRESS, KEY_A_KEYCODE),
+                } => cpu.bus.write(INPUT_MEMORY_ADDRESS, KEY_A_KEYCODE),
                 Event::KeyDown {
                     keycode: Some(Keycode::D),
                     ..
-                } => cpu.memory.write(INPUT_MEMORY_ADDRESS, KEY_D_KEYCODE),
+                } => cpu.bus.write(INPUT_MEMORY_ADDRESS, KEY_D_KEYCODE),
                 _ => {}
             }
         }

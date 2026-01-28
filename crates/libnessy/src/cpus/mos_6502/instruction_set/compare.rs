@@ -29,7 +29,7 @@ impl Compare {
     // CMP - Compare
     pub fn cmp(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
-        let memory_value = cpu.memory.read(address);
+        let memory_value = cpu.bus.read(address);
 
         cpu.program_counter += opcode.bytes as u16;
 
@@ -51,7 +51,7 @@ impl Compare {
         }
 
         let address = cpu.get_address(&opcode.address_mode);
-        let memory_value = cpu.memory.read(address);
+        let memory_value = cpu.bus.read(address);
 
         cpu.program_counter += opcode.bytes as u16;
 
@@ -73,7 +73,7 @@ impl Compare {
         }
 
         let address = cpu.get_address(&opcode.address_mode);
-        let memory_value = cpu.memory.read(address);
+        let memory_value = cpu.bus.read(address);
 
         cpu.program_counter += opcode.bytes as u16;
 
@@ -86,26 +86,31 @@ impl Compare {
 #[cfg(test)]
 mod test {
     use assert_hex::assert_eq_hex;
+    use sif::parameterized;
 
     use crate::cpus::mos_6502::{
-        address_mode::AddressMode, cpu::Registers, instruction_set::helpers::Helpers,
-        memory::Memory, status::Flags,
+        address_mode::AddressMode, cpu::Registers, instruction_set::helpers::Helpers, status::Flags,
     };
 
     use super::*;
 
-    #[test]
-    fn test_cmp_sets_zero_and_carry_flag() {
-        let mut cpu = Mos6502 {
-            registers: Registers {
-                a: 0x01,
-                x: 0,
-                y: 0,
-            },
-            program_counter: 0xAA,
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x01)]),
-            ..Default::default()
+    #[parameterized]
+    #[case(Flags::ZERO | Flags::CARRY, 0x01)]
+    #[case(Flags::NEGATIVE, 0x05)]
+    fn test_cmp(expected_flags: Flags, memory_value: u8) {
+        let registers = Registers {
+            a: 0x01,
+            x: 0,
+            y: 0,
         };
+
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            Some(vec![(0xAA, memory_value)]),
+            Some(registers),
+            None,
+        );
 
         let opcode = Helpers::create_opcode(2, AddressMode::Immediate);
 
@@ -113,39 +118,22 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(Flags::ZERO | Flags::CARRY, cpu.status);
+        assert_eq_hex!(expected_flags, cpu.status);
     }
 
-    #[test]
-    fn test_cmp_sets_negative_flag() {
-        let mut cpu = Mos6502 {
-            registers: Registers {
-                a: 0x01,
-                x: 0,
-                y: 0,
-            },
-            program_counter: 0xAA,
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x05)]),
-            ..Default::default()
-        };
+    #[parameterized]
+    #[case(Flags::ZERO | Flags::CARRY, 0x01)]
+    #[case(Flags::NEGATIVE, 0x05)]
+    fn test_cpx(expected_flags: Flags, memory_value: u8) {
+        let registers = Registers { a: 0, x: 0x1, y: 0 };
 
-        let opcode = Helpers::create_opcode(2, AddressMode::Immediate);
-
-        let result = Compare::cmp(&opcode, &mut cpu);
-
-        assert_eq!(InstructionResult::Ok, result);
-
-        assert_eq_hex!(Flags::NEGATIVE, cpu.status);
-    }
-
-    #[test]
-    fn test_cpx_sets_zero_and_carry_flag() {
-        let mut cpu = Mos6502 {
-            registers: Registers { a: 0, x: 0x1, y: 0 },
-            program_counter: 0xAA,
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x01)]),
-            ..Default::default()
-        };
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            Some(vec![(0xAA, memory_value)]),
+            Some(registers),
+            None,
+        );
 
         let opcode = Helpers::create_opcode(2, AddressMode::Immediate);
 
@@ -153,39 +141,22 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(Flags::ZERO | Flags::CARRY, cpu.status);
+        assert_eq_hex!(expected_flags, cpu.status);
     }
 
-    #[test]
-    fn test_cpx_sets_negative_flag() {
-        let mut cpu = Mos6502 {
-            registers: Registers {
-                a: 0,
-                x: 0x01,
-                y: 0,
-            },
-            program_counter: 0xAA,
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x05)]),
-            ..Default::default()
-        };
+    #[parameterized]
+    #[case(Flags::ZERO | Flags::CARRY, 0x01)]
+    #[case(Flags::NEGATIVE, 0x05)]
+    fn test_cpy(expected_flags: Flags, memory_value: u8) {
+        let registers = Registers { a: 0, x: 0, y: 0x1 };
 
-        let opcode = Helpers::create_opcode(2, AddressMode::Immediate);
-
-        let result = Compare::cpx(&opcode, &mut cpu);
-
-        assert_eq!(InstructionResult::Ok, result);
-
-        assert_eq_hex!(Flags::NEGATIVE, cpu.status);
-    }
-
-    #[test]
-    fn test_cpy_sets_zero_and_carry_flag() {
-        let mut cpu = Mos6502 {
-            registers: Registers { a: 0, x: 0, y: 0x1 },
-            program_counter: 0xAA,
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x01)]),
-            ..Default::default()
-        };
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            Some(vec![(0xAA, memory_value)]),
+            Some(registers),
+            None,
+        );
 
         let opcode = Helpers::create_opcode(2, AddressMode::Immediate);
 
@@ -193,28 +164,6 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(Flags::ZERO | Flags::CARRY, cpu.status);
-    }
-
-    #[test]
-    fn test_cpy_sets_negative_flag() {
-        let mut cpu = Mos6502 {
-            registers: Registers {
-                a: 0,
-                x: 0,
-                y: 0x01,
-            },
-            program_counter: 0xAA,
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x05)]),
-            ..Default::default()
-        };
-
-        let opcode = Helpers::create_opcode(2, AddressMode::Immediate);
-
-        let result = Compare::cpy(&opcode, &mut cpu);
-
-        assert_eq!(InstructionResult::Ok, result);
-
-        assert_eq_hex!(Flags::NEGATIVE, cpu.status);
+        assert_eq_hex!(expected_flags, cpu.status);
     }
 }

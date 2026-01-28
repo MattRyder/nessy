@@ -26,38 +26,38 @@ impl MemoryAddressing for Mos6502 {
     fn get_address(&self, address_mode: &AddressMode) -> u16 {
         match address_mode {
             AddressMode::Immediate => self.program_counter,
-            AddressMode::ZeroPage => self.memory.read(self.program_counter) as u16,
+            AddressMode::ZeroPage => self.bus.read(self.program_counter) as u16,
             AddressMode::ZeroPageX => {
-                let pc_address = self.memory.read(self.program_counter);
+                let pc_address = self.bus.read(self.program_counter);
                 pc_address.wrapping_add(self.registers.x) as u16
             }
             AddressMode::ZeroPageY => {
-                let pc_address = self.memory.read(self.program_counter);
+                let pc_address = self.bus.read(self.program_counter);
                 pc_address.wrapping_add(self.registers.y) as u16
             }
-            AddressMode::Absolute => self.memory.read_u16(self.program_counter),
+            AddressMode::Absolute => self.bus.read_u16(self.program_counter),
             AddressMode::AbsoluteX => {
-                let pc_address = self.memory.read_u16(self.program_counter);
+                let pc_address = self.bus.read_u16(self.program_counter);
                 pc_address.wrapping_add(self.registers.x as u16)
             }
             AddressMode::AbsoluteY => {
-                let pc_address = self.memory.read_u16(self.program_counter);
+                let pc_address = self.bus.read_u16(self.program_counter);
                 pc_address.wrapping_add(self.registers.y as u16)
             }
             AddressMode::IndirectX => {
-                let base_address = self.memory.read(self.program_counter);
+                let base_address = self.bus.read(self.program_counter);
 
                 let pointer = base_address.wrapping_add(self.registers.x);
-                let lo = self.memory.read(pointer as u16);
-                let hi = self.memory.read(pointer.wrapping_add(1) as u16);
+                let lo = self.bus.read(pointer as u16);
+                let hi = self.bus.read(pointer.wrapping_add(1) as u16);
 
                 (hi as u16) << 8 | (lo as u16)
             }
             AddressMode::IndirectY => {
-                let base_address = self.memory.read(self.program_counter);
+                let base_address = self.bus.read(self.program_counter);
 
-                let lo = self.memory.read(base_address as u16);
-                let hi = self.memory.read((base_address).wrapping_add(1) as u16);
+                let lo = self.bus.read(base_address as u16);
+                let hi = self.bus.read((base_address).wrapping_add(1) as u16);
 
                 let dereference_base = (hi as u16) << 8 | (lo as u16);
                 dereference_base.wrapping_add(self.registers.y as u16)
@@ -77,7 +77,8 @@ mod tests {
     use sif::parameterized;
 
     use super::*;
-    use crate::cpus::mos_6502::memory::{MEMORY_SIZE, Memory};
+    use crate::cpus::mos_6502::cpu::Registers;
+    use crate::cpus::mos_6502::instruction_set::helpers::Helpers;
     use crate::cpus::mos_6502::{address_mode::MemoryAddressing, cpu::Mos6502};
 
     #[parameterized]
@@ -90,166 +91,28 @@ mod tests {
         Mos6502::default().get_address(&address_mode);
     }
 
-    #[test]
-    fn test_get_address_with_immediate_returns_value_at_pc() {
-        let cpu = Mos6502 {
-            program_counter: 0xFF,
-            ..Default::default()
-        };
+    #[parameterized]
+    #[case(0xFF, None, None, AddressMode::Immediate, 0xFF)]
+    #[case(0x10, Some(vec![(0x10, 0xAA)]), None, AddressMode::ZeroPage, 0xAA)]
+    #[case(0x05, Some(vec![(0x05, 0xBB)]), Some(Registers{a:0, x:0x01, y:0}), AddressMode::ZeroPageX, 0xBC)]
+    #[case(0xAA, Some(vec![(0xAA, 0xC5)]), Some(Registers{a:0, x:0, y:0x01}), AddressMode::ZeroPageY, 0xC6)]
+    #[case(0xFF, Some(vec![(0xAA, 0x02), (0x02, 0x01)]), None, AddressMode::Immediate, 0xFF)]
+    #[case(0xAA, Some(vec![(0xAA, 0x34), (0xAB, 0x12)]), None, AddressMode::Absolute, 0x1234)]
+    #[case(0xAA, Some(vec![(0xAA, 0x34), (0xAB, 0x12)]), Some(Registers{a:0, x:0x01, y:0}), AddressMode::AbsoluteX, 0x1235)]
+    #[case(0xAA, Some(vec![(0xAA, 0x34), (0xAB, 0x12)]), Some(Registers{a:0, x:0, y:0x01}), AddressMode::AbsoluteY, 0x1235)]
+    #[case(0xAA, Some(vec![(0xAA, 0x13), (0x14, 0xFC), (0x15, 0xBA)]), Some(Registers{a:0, x:0x1, y:0}), AddressMode::IndirectX, 0xBAFC)]
+    #[case(0xAA, Some(vec![(0xAA, 0x50), (0x50, 0xFB), (0x51, 0xFF)]), Some(Registers{a:0, x:0, y:0x1}), AddressMode::IndirectY, 0xFFFC)]
+    fn test_get_address_with_valid(
+        program_counter: u16,
+        memory: Option<Vec<(u16, u8)>>,
+        registers: Option<Registers>,
+        address_mode: AddressMode,
+        expected_result: u16,
+    ) {
+        let cpu = Helpers::create_cpu(program_counter, 0x0, memory, registers, None);
 
-        let result = cpu.get_address(&AddressMode::Immediate);
+        let result = cpu.get_address(&address_mode);
 
-        assert_eq!(0xFF, result);
-    }
-
-    #[test]
-    fn test_get_address_with_zero_page_returns_u16_at_pc() {
-        let mut memory = [0u8; MEMORY_SIZE];
-        memory[0x10] = 0xAA;
-
-        let cpu = Mos6502 {
-            program_counter: 0x10,
-            memory: Memory::new(memory),
-            ..Default::default()
-        };
-
-        let result = cpu.get_address(&AddressMode::ZeroPage);
-
-        assert_eq!(0xAA, result);
-    }
-
-    #[test]
-    fn test_get_address_with_zero_page_x_returns_pc_add_register_x() {
-        let mut memory = [0u8; MEMORY_SIZE];
-        memory[0x05] = 0xBB;
-
-        let mut cpu = Mos6502 {
-            program_counter: 0x05,
-            memory: Memory::new(memory),
-            ..Default::default()
-        };
-
-        cpu.registers.x = 0x01;
-
-        let result = cpu.get_address(&AddressMode::ZeroPageX);
-
-        assert_eq!(0xBC, result);
-    }
-
-    #[test]
-    fn test_get_address_with_zero_page_y_returns_pc_add_register_y() {
-        let mut memory = [0u8; MEMORY_SIZE];
-        memory[0xAA] = 0xC5;
-
-        let mut cpu = Mos6502 {
-            program_counter: 0xAA,
-            memory: Memory::new(memory),
-            ..Default::default()
-        };
-
-        cpu.registers.y = 0x01;
-
-        let result = cpu.get_address(&AddressMode::ZeroPageY);
-
-        assert_eq!(0xC6, result);
-    }
-
-    #[test]
-    fn test_get_address_with_absolute_returns_value_at_pc_address() {
-        let mut memory = [0u8; MEMORY_SIZE];
-        memory[0xAA] = 0x34;
-        memory[0xAB] = 0x12;
-
-        let cpu = Mos6502 {
-            program_counter: 0xAA,
-            memory: Memory::new(memory),
-            ..Default::default()
-        };
-
-        let result = cpu.get_address(&AddressMode::Absolute);
-
-        assert_eq!(0x1234, result);
-    }
-
-    #[test]
-    fn test_get_address_with_absolute_x_returns_value_at_pc_address_plus_x_register() {
-        let mut memory = [0u8; MEMORY_SIZE];
-        memory[0xAA] = 0x34;
-        memory[0xAB] = 0x12;
-
-        let mut cpu = Mos6502 {
-            program_counter: 0xAA,
-            memory: Memory::new(memory),
-            ..Default::default()
-        };
-
-        cpu.registers.x = 0x01;
-
-        let result = cpu.get_address(&AddressMode::AbsoluteX);
-
-        assert_eq!(0x1235, result);
-    }
-
-    #[test]
-    fn test_get_address_with_absolute_y_returns_value_at_pc_address_plus_y_register() {
-        let mut memory = [0u8; MEMORY_SIZE];
-        memory[0xAA] = 0x34;
-        memory[0xAB] = 0x12;
-
-        let mut cpu = Mos6502 {
-            program_counter: 0xAA,
-            memory: Memory::new(memory),
-            ..Default::default()
-        };
-
-        cpu.registers.y = 0x01;
-
-        let result = cpu.get_address(&AddressMode::AbsoluteY);
-
-        assert_eq!(0x1235, result);
-    }
-
-    #[test]
-    fn test_get_address_with_indirect_x_returns_address() {
-        let mut memory = [0u8; MEMORY_SIZE];
-        memory[0xAA] = 0x13;
-
-        // The indirect read address
-        memory[0x14] = 0xFC;
-        memory[0x15] = 0xBA;
-
-        let mut cpu = Mos6502 {
-            program_counter: 0xAA,
-            memory: Memory::new(memory),
-            ..Default::default()
-        };
-
-        cpu.registers.x = 0x01;
-
-        let result = cpu.get_address(&AddressMode::IndirectX);
-
-        assert_eq!(0xBAFC, result);
-    }
-
-    #[test]
-    fn test_get_address_with_indirect_y_returns_address() {
-        let mut memory = [0u8; MEMORY_SIZE];
-
-        // Setup the memory with the address we're going to:
-        memory[0xAA] = 0x50;
-        memory[0x50] = 0xFB;
-        memory[0x51] = 0xFF;
-
-        let mut cpu = Mos6502 {
-            program_counter: 0xAA,
-            memory: Memory::new(memory),
-            ..Default::default()
-        };
-
-        cpu.registers.y = 0x01;
-
-        let result = cpu.get_address(&AddressMode::IndirectY);
-
-        assert_eq!(0xFFFC, result);
+        assert_eq!(expected_result, result);
     }
 }

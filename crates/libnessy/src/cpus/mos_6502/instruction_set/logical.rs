@@ -33,21 +33,21 @@ impl Logical {
     // AND - Logical AND
     pub fn and(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         Logical::accumulator_rule(opcode, cpu, |cpu, address| {
-            cpu.registers.a &= cpu.memory.read(address);
+            cpu.registers.a &= cpu.bus.read(address);
         })
     }
 
     // EOR - Exclusive OR
     pub fn eor(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         Logical::accumulator_rule(opcode, cpu, |cpu, address| {
-            cpu.registers.a ^= cpu.memory.read(address);
+            cpu.registers.a ^= cpu.bus.read(address);
         })
     }
 
     // ORA - Logical Inclusive OR
     pub fn ora(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         Logical::accumulator_rule(opcode, cpu, |cpu, address| {
-            cpu.registers.a |= cpu.memory.read(address);
+            cpu.registers.a |= cpu.bus.read(address);
         })
     }
 
@@ -60,7 +60,7 @@ impl Logical {
         let address = cpu.get_address(&opcode.address_mode);
         cpu.program_counter += opcode.bytes as u16;
 
-        let memory_value = cpu.memory.read(address);
+        let memory_value = cpu.bus.read(address);
 
         let acca_and_mem = cpu.registers.a & memory_value;
 
@@ -76,75 +76,45 @@ impl Logical {
 #[cfg(test)]
 mod test {
     use assert_hex::assert_eq_hex;
+    use sif::parameterized;
 
     use super::*;
     use crate::cpus::mos_6502::{
-        address_mode::AddressMode,
-        cpu::Registers,
-        instruction_set::helpers::Helpers,
-        memory::{MEMORY_SIZE, Memory},
-        status::Flags,
+        address_mode::AddressMode, cpu::Registers, instruction_set::helpers::Helpers, status::Flags,
     };
 
-    #[test]
-    fn test_and() {
-        let mut bytes = [0u8; MEMORY_SIZE];
-        bytes[0xAA] = 0xB;
-
-        let mut cpu = Mos6502 {
-            memory: Memory::new(bytes),
-            program_counter: 0xAA,
-            registers: Registers {
-                a: 0x05,
-                x: 0,
-                y: 0,
-            },
-            ..Default::default()
-        };
+    #[parameterized]
+    #[case(vec![(0xAA, 0x0B)], Registers { a: 0x05, x: 0, y: 0}, 0x01, Flags::empty())]
+    #[case(vec![(0xAA, 0x00)], Registers { a: 0x04, x: 0, y: 0}, 0x00, Flags::ZERO)]
+    fn test_and(
+        memory: Vec<(u16, u8)>,
+        registers: Registers,
+        expected_a_reg: u8,
+        expected_flags: Flags,
+    ) {
+        let mut cpu = Helpers::create_cpu(0xAA, 0x0, Some(memory), Some(registers), None);
 
         let opcode = Helpers::create_opcode(1, AddressMode::Immediate);
 
         Logical::and(&opcode, &mut cpu);
 
-        assert_eq_hex!(0x01, cpu.registers.a);
-        assert_eq!(Flags::empty(), cpu.status);
-    }
-
-    #[test]
-    fn test_and_zero_flag_set() {
-        let mut bytes = [0u8; MEMORY_SIZE];
-        bytes[0xAA] = 0x00;
-
-        let mut cpu = Mos6502 {
-            memory: Memory::new(bytes),
-            program_counter: 0xAA,
-            registers: Registers {
-                a: 0x04,
-                x: 0,
-                y: 0,
-            },
-            ..Default::default()
-        };
-
-        let opcode = Helpers::create_opcode(1, AddressMode::Immediate);
-
-        Logical::and(&opcode, &mut cpu);
-
-        assert_eq!(Flags::ZERO, cpu.status & Flags::ZERO);
+        assert_eq_hex!(expected_a_reg, cpu.registers.a);
+        assert_eq!(expected_flags, cpu.status);
     }
 
     #[test]
     fn test_ora_does_a_bitwise_or() {
-        let mut bytes = [0u8; MEMORY_SIZE];
-        bytes[0xAA] = 0x32;
-
-        let mut cpu = Mos6502 {
-            memory: Memory::new(bytes),
-            program_counter: 0xAA,
-            ..Default::default()
-        };
-
-        cpu.registers.a = 0x19;
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            Some(vec![(0xAA, 0x32)]),
+            Some(Registers {
+                a: 0x19,
+                x: 0,
+                y: 0,
+            }),
+            None,
+        );
 
         let opcode = Helpers::create_opcode(1, AddressMode::Immediate);
 
@@ -157,16 +127,17 @@ mod test {
 
     #[test]
     fn test_bit_sets_overflow_flags() {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x02), (0x02, 0xFF)]),
-            program_counter: 0xAA,
-            registers: Registers {
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            Some(vec![(0xAA, 0x02), (0x02, 0xFF)]),
+            Some(Registers {
                 a: 0x7F,
                 x: 0,
                 y: 0,
-            },
-            ..Default::default()
-        };
+            }),
+            None,
+        );
 
         let opcode = Helpers::create_opcode(1, AddressMode::ZeroPage);
 
@@ -178,16 +149,17 @@ mod test {
 
     #[test]
     fn test_bit_sets_zero_flag() {
-        let mut cpu = Mos6502 {
-            memory: Memory::new_with_bytes(vec![(0xAA, 0x02), (0x02, 0x00)]),
-            program_counter: 0xAA,
-            registers: Registers {
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            Some(vec![(0xAA, 0x02), (0x02, 0x00)]),
+            Some(Registers {
                 a: 0x00,
                 x: 0,
                 y: 0,
-            },
-            ..Default::default()
-        };
+            }),
+            None,
+        );
 
         let opcode = Helpers::create_opcode(1, AddressMode::ZeroPage);
 

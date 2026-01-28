@@ -12,7 +12,7 @@ impl Store {
     pub fn sta(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        cpu.memory.write(address, cpu.registers.a);
+        cpu.bus.write(address, cpu.registers.a);
 
         cpu.program_counter += opcode.bytes as u16;
 
@@ -23,7 +23,7 @@ impl Store {
     pub fn stx(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        cpu.memory.write(address, cpu.registers.x);
+        cpu.bus.write(address, cpu.registers.x);
 
         cpu.program_counter += opcode.bytes as u16;
 
@@ -34,7 +34,7 @@ impl Store {
     pub fn sty(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        cpu.memory.write(address, cpu.registers.y);
+        cpu.bus.write(address, cpu.registers.y);
 
         cpu.program_counter += opcode.bytes as u16;
 
@@ -46,68 +46,71 @@ impl Store {
 mod test {
     use crate::cpus::mos_6502::{
         address_mode::AddressMode,
-        cpu::{Mos6502, Registers},
+        cpu::Registers,
         instruction_set::{helpers::Helpers, store::Store},
-        memory::{Memory, MemoryAccess},
+        memory::MemoryAccess,
     };
 
     #[test]
     fn test_sta_writes_accumulator_to_memory() {
-        let mut cpu = Mos6502 {
-            registers: Registers {
+        let mut cpu = Helpers::create_cpu(
+            0x0,
+            0x0,
+            Some(vec![(0x0, 0x01)]),
+            Some(Registers {
                 a: 0x22,
                 x: 0,
                 y: 0,
-            },
-            program_counter: 0,
-            memory: Memory::new_with_bytes(vec![(0x0, 0x01)]),
-            ..Default::default()
-        };
+            }),
+            None,
+        );
 
         let opcode = Helpers::create_opcode(2, AddressMode::ZeroPage);
 
         Store::sta(&opcode, &mut cpu);
 
-        assert_eq!(0x22, cpu.memory.read(0x01))
+        assert_eq!(0x22, cpu.bus.read(0x01))
     }
 
     #[test]
     fn test_stx_writes_register_x_to_memory() {
-        let mut cpu = Mos6502 {
-            registers: Registers {
-                a: 0,
+        let mut cpu = Helpers::create_cpu(
+            0x0,
+            0x0,
+            Some(vec![(0x0, 0x01)]),
+            Some(Registers {
+                a: 0x0,
                 x: 0x22,
                 y: 0,
-            },
-            program_counter: 0,
-            memory: Memory::new_with_bytes(vec![(0x0, 0x01)]),
-            ..Default::default()
-        };
+            }),
+            None,
+        );
 
         let opcode = Helpers::create_opcode(2, AddressMode::ZeroPage);
 
         Store::stx(&opcode, &mut cpu);
 
-        assert_eq!(0x22, cpu.memory.read(0x01))
+        assert_eq!(0x22, cpu.bus.read(0x01))
     }
 
     #[test]
     fn test_sty_writes_register_y_to_memory() {
-        let mut cpu = Mos6502 {
-            registers: Registers {
-                a: 0,
+        let mut cpu = Helpers::create_cpu(
+            0x0,
+            0x0,
+            Some(vec![(0x0, 0x01)]),
+            Some(Registers {
+                a: 0x0,
                 x: 0,
                 y: 0x22,
-            },
-            program_counter: 0,
-            memory: Memory::new_with_bytes(vec![(0x0, 0x01)]),
-            ..Default::default()
-        };
+            }),
+            None,
+        );
 
         let opcode = Helpers::create_opcode(2, AddressMode::ZeroPage);
 
         Store::sty(&opcode, &mut cpu);
 
-        assert_eq!(0x22, cpu.memory.read(0x01))
+        assert_eq!(0x22, cpu.bus.read(0x01))
     }
 }
