@@ -1,4 +1,4 @@
-use crate::cpus::mos_6502::memory::MemoryAccess;
+use crate::{cpus::mos_6502::memory::MemoryAccess, roms::ROM};
 
 // Constants
 const MEMORY_SIZE: usize = 2048;
@@ -32,6 +32,7 @@ enum AddressError {
 #[derive(Debug)]
 pub struct Bus {
     cpu_memory: [u8; MEMORY_SIZE],
+    rom: Option<ROM>,
 }
 
 impl Default for Bus {
@@ -39,13 +40,14 @@ impl Default for Bus {
         // Zero inits the RAM but NES state could be garbage on hardware.
         Self {
             cpu_memory: [0; MEMORY_SIZE],
+            rom: None,
         }
     }
 }
 
 impl Bus {
-    pub fn new(cpu_memory: [u8; MEMORY_SIZE]) -> Self {
-        Self { cpu_memory }
+    pub fn new(cpu_memory: [u8; MEMORY_SIZE], rom: Option<ROM>) -> Self {
+        Self { cpu_memory, rom }
     }
 
     fn parse_address(address: u16) -> Result<usize, AddressError> {
@@ -157,7 +159,7 @@ mod test {
     #[test]
     fn test_read_returns_correct_value() {
         let memory = setup_memory(vec![(0x10, 0xAA)]);
-        let bus = Bus::new(memory);
+        let bus = Bus::new(memory, None);
 
         assert_eq_hex!(0xAA, bus.read(0x10));
     }
@@ -165,7 +167,7 @@ mod test {
     #[test]
     fn test_write_sets_correct_value() {
         let memory = setup_memory(vec![]);
-        let mut bus = Bus::new(memory);
+        let mut bus = Bus::new(memory, None);
 
         bus.write(0x400, 0xAA);
 
@@ -175,7 +177,7 @@ mod test {
     #[test]
     fn test_read_u16_returns_correct_value() {
         let memory = setup_memory(vec![(0x50, 0xAA), (0x51, 0xBB)]);
-        let bus = Bus::new(memory);
+        let bus = Bus::new(memory, None);
 
         assert_eq_hex!(0xBBAA, bus.read_u16(0x50));
     }
@@ -183,7 +185,7 @@ mod test {
     #[test]
     fn test_write_u16_set_correct_value() {
         let memory = setup_memory(vec![]);
-        let mut bus = Bus::new(memory);
+        let mut bus = Bus::new(memory, None);
 
         bus.write_u16(0x0001, 0xAABB);
 

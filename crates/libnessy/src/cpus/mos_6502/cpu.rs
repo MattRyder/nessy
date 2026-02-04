@@ -15,9 +15,10 @@ pub struct Registers {
     pub y: u8,
 }
 
+pub const DEFAULT_FLAGS: u8 = 0b0010_0100;
+
 // Memory Addresses
 pub const RESET_VECTOR: u16 = 0xFFFC;
-
 pub const STACK_POINTER_RESET: u8 = 0xFF;
 
 #[derive(Default)]
@@ -39,7 +40,7 @@ impl Mos6502 {
 
     pub fn reset(&mut self) {
         self.registers = Registers::default();
-        self.status = Flags::empty();
+        self.status = Flags::from_bits_truncate(DEFAULT_FLAGS);
         self.program_counter = self.bus.read_u16(RESET_VECTOR);
         self.stack_pointer = STACK_POINTER_RESET;
     }
@@ -112,7 +113,7 @@ mod tests {
         assert_eq!(0, cpu.registers.x);
         assert_eq!(0, cpu.registers.y);
 
-        assert_eq!(Flags::empty(), cpu.status);
+        assert_eq!(Flags::from_bits_truncate(DEFAULT_FLAGS), cpu.status);
 
         assert_eq!(0, cpu.program_counter);
     }

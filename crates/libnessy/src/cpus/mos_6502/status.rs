@@ -10,6 +10,7 @@ pub struct Flags: u8 {
     const INTERRUPT_DISABLE = 0b0000_0100;
     const DECIMAL_MODE = 0b0000_1000;
     const BREAK_COMMAND = 0b001_0000;
+    // 0b0010_0000 is unused, set to high
     const OVERFLOW = 0b0100_0000;
     const NEGATIVE = 0b1000_0000;
 }
