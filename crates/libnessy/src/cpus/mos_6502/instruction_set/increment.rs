@@ -1,9 +1,9 @@
 use crate::{
     cpus::mos_6502::{
         address_mode::{AddressMode, MemoryAddressing},
+        bus::MemoryAccess,
         cpu::Mos6502,
         instruction_set::helpers::MSB_MASK,
-        memory::MemoryAccess,
         opcode::OpCode,
         status::Flags,
     },
@@ -69,7 +69,9 @@ mod test {
 
     use super::*;
 
-    use crate::cpus::mos_6502::{cpu::Mos6502, instruction_set::helpers::Helpers};
+    use crate::cpus::mos_6502::{
+        bus::MemoryAccess, cpu::Mos6502, instruction_set::helpers::Helpers,
+    };
 
     #[test]
     fn test_inc_increments_memory_value() {

@@ -1,4 +1,13 @@
-use crate::{cpus::mos_6502::memory::MemoryAccess, roms::ROM};
+use crate::roms::ROM;
+
+pub trait MemoryAccess {
+    fn read(&self, address: u16) -> u8;
+    fn write(&mut self, address: u16, data: u8);
+    fn write_slice(&mut self, start_address: u16, data: &[u8]);
+
+    fn read_u16(&self, address: u16) -> u16;
+    fn write_u16(&mut self, address: u16, data: u16);
+}
 
 // Constants
 const MEMORY_SIZE: usize = 2048;
@@ -25,8 +34,14 @@ const PPU_REGISTERS_START: u16 = 0x2000;
 const PPU_REGISTERS_MIRROR_RANGE_END: u16 = 0x3FFF;
 const PPU_REGISTERS_MASK: u16 = 0x2007;
 
+const _CARTRIDGE_RAM_START: u16 = 0x6000;
+const _CARTRIDGE_RAM_END: u16 = 0x7FFF;
+
+const CARTRIDGE_ROM_START: u16 = 0x8000;
+const CARTRIDGE_ROM_END: u16 = 0xFFFF;
+
 enum AddressError {
-    InaccessibleAddress,
+    InaccessibleAddress(String),
 }
 
 #[derive(Debug)]
@@ -49,26 +64,24 @@ impl Bus {
     pub fn new(cpu_memory: [u8; MEMORY_SIZE], rom: Option<ROM>) -> Self {
         Self { cpu_memory, rom }
     }
-
-    fn parse_address(address: u16) -> Result<usize, AddressError> {
-        match address {
-            CPU_RAM_START..=CPU_RAM_MIRROR_RANGE_END => {
-                // drop the address to the 11-bit addressing
-                Ok((address & CPU_RAM_ADDRESS_MASK) as usize)
-            }
-            PPU_REGISTERS_START..=PPU_REGISTERS_MIRROR_RANGE_END => {
-                Ok((address & PPU_REGISTERS_MASK) as usize)
-            }
-            _ => Err(AddressError::InaccessibleAddress),
-        }
-    }
 }
 
 impl MemoryAccess for Bus {
     fn read(&self, address: u16) -> u8 {
-        match Bus::parse_address(address) {
-            Ok(addr) => self.cpu_memory[addr],
-            Err(_) => {
+        match address {
+            CPU_RAM_START..=CPU_RAM_MIRROR_RANGE_END => {
+                let addr = (address & CPU_RAM_ADDRESS_MASK) as usize;
+                self.cpu_memory[addr]
+            }
+            PPU_REGISTERS_START..=PPU_REGISTERS_MIRROR_RANGE_END => {
+                let _addr = (address & PPU_REGISTERS_MASK) as usize;
+                todo!("PPU read");
+            }
+            CARTRIDGE_ROM_START..=CARTRIDGE_ROM_END => {
+                // let addr =
+                0
+            }
+            _ => {
                 println!(
                     "Can't access address `0x{:x}`. This needs to be an error returned!",
                     address
@@ -79,11 +92,16 @@ impl MemoryAccess for Bus {
     }
 
     fn write(&mut self, address: u16, data: u8) {
-        match Bus::parse_address(address) {
-            Ok(addr) => {
+        match address {
+            CPU_RAM_START..=CPU_RAM_MIRROR_RANGE_END => {
+                let addr = (address & CPU_RAM_ADDRESS_MASK) as usize;
                 self.cpu_memory[addr] = data;
             }
-            Err(_) => {
+            PPU_REGISTERS_START..=PPU_REGISTERS_MIRROR_RANGE_END => {
+                let _addr = (address & PPU_REGISTERS_MASK) as usize;
+                todo!("PPU write")
+            }
+            _ => {
                 println!(
                     "Can't access address `0x{:x}`. This needs to be an error returned!",
                     address
@@ -94,9 +112,16 @@ impl MemoryAccess for Bus {
 
     fn write_slice(&mut self, start_address: u16, data: &[u8]) {
         // TODO: this should check the entire range is valid for the ram segment being written.
-        match Bus::parse_address(start_address) {
-            Ok(addr) => self.cpu_memory[addr..(addr + data.len())].copy_from_slice(data),
-            Err(_) => {
+        match start_address {
+            CPU_RAM_START..=CPU_RAM_MIRROR_RANGE_END => {
+                let addr = (start_address & CPU_RAM_ADDRESS_MASK) as usize;
+                self.cpu_memory[addr..(addr + data.len())].copy_from_slice(data);
+            }
+            PPU_REGISTERS_START..=PPU_REGISTERS_MIRROR_RANGE_END => {
+                let _addr = (start_address & PPU_REGISTERS_MASK) as usize;
+                todo!("PPU write_slice")
+            }
+            _ => {
                 println!(
                     "Can't access address `0x{:x}`. This needs to be an error returned!",
                     start_address
@@ -106,14 +131,19 @@ impl MemoryAccess for Bus {
     }
 
     fn read_u16(&self, address: u16) -> u16 {
-        match Bus::parse_address(address) {
-            Ok(addr) => {
+        match address {
+            CPU_RAM_START..=CPU_RAM_MIRROR_RANGE_END => {
+                let addr = (address & CPU_RAM_ADDRESS_MASK) as usize;
                 let addr_u16 = addr as u16;
                 let lo_byte = self.read(addr_u16) as u16;
                 let hi_byte = self.read(addr_u16 + 1) as u16;
                 (hi_byte << 8) | lo_byte
             }
-            Err(_) => {
+            PPU_REGISTERS_START..=PPU_REGISTERS_MIRROR_RANGE_END => {
+                let _addr = (address & PPU_REGISTERS_MASK) as usize;
+                todo!("PPU read_u16");
+            }
+            _ => {
                 println!(
                     "Can't access address `0x{:x}`. This needs to be an error returned!",
                     address
@@ -124,15 +154,20 @@ impl MemoryAccess for Bus {
     }
 
     fn write_u16(&mut self, address: u16, data: u16) {
-        match Bus::parse_address(address) {
-            Ok(addr) => {
+        match address {
+            CPU_RAM_START..=CPU_RAM_MIRROR_RANGE_END => {
+                let addr = (address & CPU_RAM_ADDRESS_MASK) as usize;
                 let addr_u16 = addr as u16;
                 let hi_byte = (data >> 8) as u8;
                 let lo_byte = (data & 0xFF) as u8;
                 self.write(addr_u16, lo_byte);
                 self.write(addr_u16 + 1, hi_byte);
             }
-            Err(_) => {
+            PPU_REGISTERS_START..=PPU_REGISTERS_MIRROR_RANGE_END => {
+                let _addr = (address & PPU_REGISTERS_MASK) as usize;
+                todo!("PPU read_u16");
+            }
+            _ => {
                 println!(
                     "Can't access address `0x{:x}`. This needs to be an error returned!",
                     address

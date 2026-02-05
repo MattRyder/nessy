@@ -47,3 +47,4 @@ This project is open source under the terms of the AGPLv3 License.
 
 - [Writing a NES emulator in Rust](https://bugzmanov.github.io/nes_ebook)
 - [Obelisk 6502 Guide](https://www.nesdev.org/obelisk-6502-guide/)
+- [iNES File Format](https://formats.kaitai.io/ines/index.html)

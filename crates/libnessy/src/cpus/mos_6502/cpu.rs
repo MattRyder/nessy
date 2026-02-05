@@ -1,7 +1,7 @@
 use crate::{
     cpus::mos_6502::{
-        bus::Bus,
-        memory::{MemoryAccess, PROGRAM_ROM_START},
+        bus::{Bus, MemoryAccess},
+        memory::PROGRAM_ROM_START,
         opcode::OPCODES,
         status::Flags,
     },

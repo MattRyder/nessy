@@ -5,7 +5,7 @@ use std::{
     time::Duration,
 };
 
-use libnessy::{cpus::mos_6502::memory::MemoryAccess, nes::NES};
+use libnessy::{cpus::mos_6502::bus::MemoryAccess, nes::NES};
 use rand::Rng;
 
 use crate::{

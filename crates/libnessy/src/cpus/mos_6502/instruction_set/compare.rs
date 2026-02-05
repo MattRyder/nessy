@@ -1,9 +1,9 @@
 use crate::{
     cpus::mos_6502::{
         address_mode::{AddressMode, MemoryAddressing},
+        bus::MemoryAccess,
         cpu::Mos6502,
         instruction_set::helpers::MSB_MASK,
-        memory::MemoryAccess,
         opcode::OpCode,
         status::Flags,
     },
