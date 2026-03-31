@@ -69,7 +69,7 @@ impl Loader {
 
         let metadata = Self::parse_metadata(data[6], data[7]);
 
-        if metadata.version != 1 {
+        if metadata.version > 1 {
             return Err("Cannot load the iNES version 2. Please use iNES version 1.");
         }
 

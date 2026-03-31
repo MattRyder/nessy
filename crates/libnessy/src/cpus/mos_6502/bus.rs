@@ -64,6 +64,10 @@ impl Bus {
     pub fn new(cpu_memory: [u8; MEMORY_SIZE], rom: Option<ROM>) -> Self {
         Self { cpu_memory, rom }
     }
+
+    pub fn insert_rom(&mut self, rom: ROM) {
+        self.rom = Some(rom);
+    }
 }
 
 impl MemoryAccess for Bus {

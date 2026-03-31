@@ -6,6 +6,7 @@ use crate::{
         status::Flags,
     },
     interpret_result::{InstructionResult, ProgramResult},
+    roms::ROM,
 };
 
 #[derive(Debug, Default, PartialEq)]
@@ -31,9 +32,9 @@ pub struct Mos6502 {
 }
 
 impl Mos6502 {
-    pub fn create_cpu_with_program(program: &[u8]) -> Mos6502 {
+    pub fn create_cpu_with_program(rom: ROM) -> Self {
         let mut cpu = Mos6502::default();
-        cpu.load_program(program);
+        cpu.load_program(rom);
         cpu.reset();
         cpu
     }
@@ -45,9 +46,9 @@ impl Mos6502 {
         self.stack_pointer = STACK_POINTER_RESET;
     }
 
-    pub fn load_program(&mut self, program: &[u8]) {
-        self.bus.write_slice(PROGRAM_ROM_START, program);
-        self.bus.write_u16(RESET_VECTOR, PROGRAM_ROM_START);
+    pub fn load_program(&mut self, rom: ROM) {
+        self.bus.insert_rom(rom);
+        self.reset();
     }
 
     pub fn run(&mut self) -> ProgramResult {
