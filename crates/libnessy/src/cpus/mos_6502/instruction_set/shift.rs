@@ -2,8 +2,8 @@ use std::ops::{Shl, Shr};
 
 use crate::{
     cpus::mos_6502::{
-        address_mode::MemoryAddressing, cpu::Mos6502, instruction_set::helpers::MSB_MASK,
-        memory::MemoryAccess, opcode::OpCode, status::Flags,
+        address_mode::MemoryAddressing, bus::MemoryAccess, cpu::Mos6502,
+        instruction_set::helpers::MSB_MASK, opcode::OpCode, status::Flags,
     },
     interpret_result::InstructionResult,
 };

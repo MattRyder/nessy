@@ -1,11 +1,12 @@
 use crate::{
     cpus::mos_6502::{
-        bus::Bus,
-        memory::{MemoryAccess, PROGRAM_ROM_START},
+        bus::{Bus, MemoryAccess},
+        memory::PROGRAM_ROM_START,
         opcode::OPCODES,
         status::Flags,
     },
     interpret_result::{InstructionResult, ProgramResult},
+    roms::ROM,
 };
 
 #[derive(Debug, Default, PartialEq)]
@@ -15,9 +16,10 @@ pub struct Registers {
     pub y: u8,
 }
 
+pub const DEFAULT_FLAGS: u8 = 0b0010_0100;
+
 // Memory Addresses
 pub const RESET_VECTOR: u16 = 0xFFFC;
-
 pub const STACK_POINTER_RESET: u8 = 0xFF;
 
 #[derive(Default)]
@@ -30,23 +32,23 @@ pub struct Mos6502 {
 }
 
 impl Mos6502 {
-    pub fn create_cpu_with_program(program: &[u8]) -> Mos6502 {
+    pub fn create_cpu_with_program(rom: ROM) -> Self {
         let mut cpu = Mos6502::default();
-        cpu.load_program(program);
+        cpu.load_program(rom);
         cpu.reset();
         cpu
     }
 
     pub fn reset(&mut self) {
         self.registers = Registers::default();
-        self.status = Flags::empty();
+        self.status = Flags::from_bits_truncate(DEFAULT_FLAGS);
         self.program_counter = self.bus.read_u16(RESET_VECTOR);
         self.stack_pointer = STACK_POINTER_RESET;
     }
 
-    pub fn load_program(&mut self, program: &[u8]) {
-        self.bus.write_slice(PROGRAM_ROM_START, program);
-        self.bus.write_u16(RESET_VECTOR, PROGRAM_ROM_START);
+    pub fn load_program(&mut self, rom: ROM) {
+        self.bus.insert_rom(rom);
+        self.reset();
     }
 
     pub fn run(&mut self) -> ProgramResult {
@@ -112,7 +114,7 @@ mod tests {
         assert_eq!(0, cpu.registers.x);
         assert_eq!(0, cpu.registers.y);
 
-        assert_eq!(Flags::empty(), cpu.status);
+        assert_eq!(Flags::from_bits_truncate(DEFAULT_FLAGS), cpu.status);
 
         assert_eq!(0, cpu.program_counter);
     }

@@ -5,7 +5,7 @@ use std::{
     time::Duration,
 };
 
-use libnessy::{cpus::mos_6502::memory::MemoryAccess, nes::NES};
+use libnessy::{cpus::mos_6502::bus::MemoryAccess, nes::NES, roms::loader::Loader};
 use rand::Rng;
 
 use crate::{
@@ -33,7 +33,11 @@ fn main() {
         &args[1]
     };
 
-    let rom_path = if true { "./assets/snake.bin" } else { &args[2] };
+    let rom_path = if true {
+        "./assets/nestest.nes"
+    } else {
+        &args[2]
+    };
 
     // Load emu settings:
     let settings = match Settings::new(Path::new(settings_path)) {
@@ -77,9 +81,15 @@ fn main() {
         Err(reason) => panic!("Failed to read ROM: {}.", reason),
     };
 
+    let rom = Loader::load(&rom_data);
+
+    if rom.is_err() {
+        panic!("ROM load error: {}", rom.err().unwrap());
+    }
+
     let mut nes = NES::default();
 
-    nes.cpu.load_program(&rom_data);
+    nes.cpu.load_program(rom.unwrap());
     nes.cpu.reset();
 
     graphics_system.clear();

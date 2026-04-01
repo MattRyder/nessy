@@ -1,5 +1,5 @@
 use crate::{
-    cpus::mos_6502::{cpu::Mos6502, memory::MemoryAccess, status::Flags},
+    cpus::mos_6502::{bus::MemoryAccess, cpu::Mos6502, status::Flags},
     interpret_result::InstructionResult,
 };
 
@@ -85,6 +85,7 @@ mod test {
 
     use super::*;
     use crate::cpus::mos_6502::{
+        bus::MemoryAccess,
         cpu::{Mos6502, Registers},
         instruction_set::helpers::Helpers,
         status::Flags,

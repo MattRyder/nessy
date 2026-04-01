@@ -1,5 +1,6 @@
+use crate::cpus::mos_6502::bus::MemoryAccess;
+
 use super::cpu::Mos6502;
-use super::memory::MemoryAccess;
 
 #[derive(Debug, PartialEq)]
 pub enum AddressMode {

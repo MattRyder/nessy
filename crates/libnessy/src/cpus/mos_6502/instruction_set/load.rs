@@ -1,6 +1,6 @@
 use crate::{
     cpus::mos_6502::{
-        address_mode::MemoryAddressing, cpu::Mos6502, memory::MemoryAccess, opcode::OpCode,
+        address_mode::MemoryAddressing, bus::MemoryAccess, cpu::Mos6502, opcode::OpCode,
     },
     interpret_result::InstructionResult,
 };
@@ -56,7 +56,10 @@ mod test {
 
     use super::*;
     use crate::cpus::mos_6502::{
-        address_mode::AddressMode, bus::Bus, instruction_set::helpers::Helpers, status::Flags,
+        address_mode::AddressMode,
+        bus::{Bus, MemoryAccess},
+        instruction_set::helpers::Helpers,
+        status::Flags,
     };
 
     fn create_cpu(memory_value: u8) -> Mos6502 {

@@ -1,8 +1,8 @@
 use crate::{
     cpus::mos_6502::{
         address_mode::{AddressMode, MemoryAddressing},
+        bus::MemoryAccess,
         cpu::Mos6502,
-        memory::MemoryAccess,
         opcode::OpCode,
         status::Flags,
     },

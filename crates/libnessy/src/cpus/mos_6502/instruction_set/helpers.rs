@@ -58,7 +58,7 @@ impl Helpers {
 
         if let Some(mem_values) = memory_values {
             for (addr, value) in mem_values {
-                use crate::cpus::mos_6502::memory::MemoryAccess;
+                use crate::cpus::mos_6502::bus::MemoryAccess;
 
                 cpu.bus.write(addr, value);
             }
