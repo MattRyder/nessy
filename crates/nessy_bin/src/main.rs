@@ -6,7 +6,7 @@ use std::{
 };
 
 use libnessy::{cpus::mos_6502::bus::MemoryAccess, nes::NES, roms::loader::Loader};
-use rand::Rng;
+use rand::{Rng, RngExt};
 
 use crate::{
     graphics_system::{GraphicsSystem, GraphicsSystemOptions},
