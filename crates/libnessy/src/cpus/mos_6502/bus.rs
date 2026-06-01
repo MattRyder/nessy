@@ -12,6 +12,9 @@ pub trait MemoryAccess {
 // Constants
 const MEMORY_SIZE: usize = 2048;
 
+// Records how large a 16KB block is, for PRG ROM mirroring.
+const SIXTEEN_KILOBYTES: usize = 0x4000;
+
 // NES RAM Mirroring:
 //
 // The NES CPU RAM has 2k KiB available, by nature of the 11 lines attached from CPU to RAM.
@@ -34,15 +37,8 @@ const PPU_REGISTERS_START: u16 = 0x2000;
 const PPU_REGISTERS_MIRROR_RANGE_END: u16 = 0x3FFF;
 const PPU_REGISTERS_MASK: u16 = 0x2007;
 
-const _CARTRIDGE_RAM_START: u16 = 0x6000;
-const _CARTRIDGE_RAM_END: u16 = 0x7FFF;
-
-const CARTRIDGE_ROM_START: u16 = 0x8000;
-const CARTRIDGE_ROM_END: u16 = 0xFFFF;
-
-enum AddressError {
-    InaccessibleAddress(String),
-}
+const CARTRIDGE_START: u16 = 0x4020;
+const CARTRIDGE_END: u16 = 0xFFFF;
 
 #[derive(Debug)]
 pub struct Bus {
@@ -81,9 +77,23 @@ impl MemoryAccess for Bus {
                 let _addr = (address & PPU_REGISTERS_MASK) as usize;
                 todo!("PPU read");
             }
-            CARTRIDGE_ROM_START..=CARTRIDGE_ROM_END => {
-                // let addr =
-                0
+            CARTRIDGE_START..=CARTRIDGE_END => {
+                // PRG ROM size can be 16KB or 32KB.
+                // As there's a 32KB addressible space here, a 16KB ROM basically
+                // means that it's mirrored (i.e. mapped to the lower 16KB.)
+                // If we've got a 16KB PRG ROM, and the address is over 16KB, map it down.
+                //
+                if let Some(rom) = self.rom.as_ref() {
+                    let mut addr = address as usize;
+
+                    if rom.program_rom().len() == SIXTEEN_KILOBYTES && addr >= SIXTEEN_KILOBYTES {
+                        addr %= SIXTEEN_KILOBYTES;
+                    }
+
+                    rom.program_rom()[addr]
+                } else {
+                    panic!("Can't access the cartridge rom!");
+                }
             }
             _ => {
                 println!(
@@ -146,6 +156,12 @@ impl MemoryAccess for Bus {
             PPU_REGISTERS_START..=PPU_REGISTERS_MIRROR_RANGE_END => {
                 let _addr = (address & PPU_REGISTERS_MASK) as usize;
                 todo!("PPU read_u16");
+            }
+            CARTRIDGE_START..=CARTRIDGE_END => {
+                let addr_u16 = address; //- CARTRIDGE_START;
+                let lo_byte = self.read(addr_u16) as u16;
+                let hi_byte = self.read(addr_u16 + 1) as u16;
+                (hi_byte << 8) | lo_byte
             }
             _ => {
                 println!(

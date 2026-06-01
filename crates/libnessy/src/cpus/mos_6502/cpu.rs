@@ -32,7 +32,7 @@ pub struct Mos6502 {
 }
 
 impl Mos6502 {
-    pub fn create_cpu_with_program(rom: ROM) -> Self {
+    pub fn create_cpu_with_program(rom: ROM) -> Mos6502 {
         let mut cpu = Mos6502::default();
         cpu.load_program(rom);
         cpu.reset();
@@ -42,13 +42,14 @@ impl Mos6502 {
     pub fn reset(&mut self) {
         self.registers = Registers::default();
         self.status = Flags::from_bits_truncate(DEFAULT_FLAGS);
-        self.program_counter = self.bus.read_u16(RESET_VECTOR);
         self.stack_pointer = STACK_POINTER_RESET;
     }
 
     pub fn load_program(&mut self, rom: ROM) {
         self.bus.insert_rom(rom);
         self.reset();
+
+        self.program_counter = self.bus.read_u16(RESET_VECTOR);
     }
 
     pub fn run(&mut self) -> ProgramResult {
@@ -78,7 +79,7 @@ impl Mos6502 {
                     match (opcode.execute)(opcode, self) {
                         InstructionResult::Ok => (),
                         InstructionResult::IllegalInstruction => {
-                            panic!("Illlegal instruction! Opcode: {:?}.", opcode);
+                            panic!("Illegal instruction! Opcode: {:?}.", opcode);
                         }
                         InstructionResult::StackOverflow => {
                             panic!("Stack overflow occurred! Opcode: {:?}.", opcode);
