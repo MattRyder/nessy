@@ -73,8 +73,6 @@ mod test {
 
         let settings = Settings::new(settings_file.path());
 
-        dbg!(&settings);
-
         assert!(settings.is_ok());
 
         let unwrapped = settings.unwrap();
