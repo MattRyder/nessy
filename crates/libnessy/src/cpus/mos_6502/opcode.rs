@@ -105,20 +105,20 @@ lazy_static! {
 
         (0xE0, "CPX", 2, 2, AddressMode::Immediate, |opcode, cpu| { Compare::cpx(opcode, cpu) }),
         (0xE4, "CPX", 2, 3, AddressMode::ZeroPage, |opcode, cpu| { Compare::cpx(opcode, cpu) }),
-        (0xEC, "CPX", 2, 4, AddressMode::Absolute, |opcode, cpu| { Compare::cpx(opcode, cpu) }),
+        (0xEC, "CPX", 3, 4, AddressMode::Absolute, |opcode, cpu| { Compare::cpx(opcode, cpu) }),
 
         (0xC0, "CPY", 2, 2, AddressMode::Immediate, |opcode, cpu| { Compare::cpy(opcode, cpu) }),
         (0xC4, "CPY", 2, 3, AddressMode::ZeroPage, |opcode, cpu| { Compare::cpy(opcode, cpu) }),
-        (0xCC, "CPY", 2, 4, AddressMode::Absolute, |opcode, cpu| { Compare::cpy(opcode, cpu) }),
+        (0xCC, "CPY", 3, 4, AddressMode::Absolute, |opcode, cpu| { Compare::cpy(opcode, cpu) }),
 
         (0xC6, "DEC", 2, 5, AddressMode::ZeroPage, |opcode, cpu| { Decrement::dec(opcode, cpu) }),
         (0xD6, "DEC", 2, 6, AddressMode::ZeroPageX, |opcode, cpu| { Decrement::dec(opcode, cpu) }),
         (0xCE, "DEC", 3, 6, AddressMode::Absolute, |opcode, cpu| { Decrement::dec(opcode, cpu) }),
         (0xDE, "DEC", 3, 7, AddressMode::AbsoluteX, |opcode, cpu| { Decrement::dec(opcode, cpu) }),
 
-        (0xCA, "DEX", 2, 4, AddressMode::Implied, |opcode, cpu| { Decrement::dex(opcode, cpu) }),
+        (0xCA, "DEX", 1, 2, AddressMode::Implied, |opcode, cpu| { Decrement::dex(opcode, cpu) }),
 
-        (0x88, "DEY", 2, 4, AddressMode::Implied, |opcode, cpu| { Decrement::dey(opcode, cpu) }),
+        (0x88, "DEY", 1, 2, AddressMode::Implied, |opcode, cpu| { Decrement::dey(opcode, cpu) }),
 
         (0x49, "EOR", 2, 2, AddressMode::Immediate, |opcode, cpu| { Logical::eor(opcode, cpu) }),
         (0x45, "EOR", 2, 3, AddressMode::ZeroPage, |opcode, cpu| { Logical::eor(opcode, cpu) }),
@@ -219,7 +219,7 @@ lazy_static! {
         (0xF1, "SBC", 2, 5, AddressMode::IndirectY, |opcode, cpu| { Arithmetic::sbc(opcode, cpu) }),
 
         (0x38, "SEC", 1, 2, AddressMode::Implied, |_, cpu| { Set::sec(cpu) }),
-        (0xF1, "SED", 1, 2, AddressMode::Implied, |_, cpu| { Set::sed(cpu) }),
+        (0xF8, "SED", 1, 2, AddressMode::Implied, |_, cpu| { Set::sed(cpu) }),
         (0x78, "SEI", 1, 2, AddressMode::Implied, |_, cpu| { Set::sei(cpu) }),
 
         (0x2A, "ROL", 1, 2, AddressMode::Accumulator, |_, cpu| { Rotate::rotate_accumulator(cpu, Direction::Left) }),
@@ -301,6 +301,6 @@ mod test {
 
     #[test]
     fn test_opcodes_count() {
-        assert_eq!(150, OPCODES.len());
+        assert_eq!(151, OPCODES.len());
     }
 }

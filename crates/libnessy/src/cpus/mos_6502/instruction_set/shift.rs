@@ -2,8 +2,8 @@ use std::ops::{Shl, Shr};
 
 use crate::{
     cpus::mos_6502::{
-        address_mode::MemoryAddressing, bus::MemoryAccess, cpu::Mos6502,
-        instruction_set::helpers::MSB_MASK, opcode::OpCode, status::Flags,
+        address_mode::MemoryAddressing, cpu::Mos6502, instruction_set::helpers::MSB_MASK,
+        opcode::OpCode, status::Flags,
     },
     interpret_result::InstructionResult,
 };
@@ -88,11 +88,13 @@ mod test {
 
     #[test]
     fn test_asl_with_accumulator_does_bitwise_shift() {
-        let mut cpu = Mos6502 {
-            registers: Registers { a: 0x2, x: 0, y: 0 },
-            program_counter: 0xAA,
-            ..Default::default()
-        };
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            None,
+            Some(Registers { a: 0x2, x: 0, y: 0 }),
+            None,
+        );
 
         Shift::asl_accumulator(&mut cpu);
 
@@ -124,6 +126,7 @@ mod test {
                 x: 0,
                 y: 0,
             },
+            status: Flags::empty(),
             program_counter: 0xAA,
             ..Default::default()
         };

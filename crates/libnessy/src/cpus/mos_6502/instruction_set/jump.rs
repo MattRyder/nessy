@@ -1,7 +1,6 @@
 use crate::{
     cpus::mos_6502::{
         address_mode::{AddressMode, MemoryAddressing},
-        bus::MemoryAccess,
         cpu::Mos6502,
         instruction_set::stack::Stack,
         opcode::OpCode,
@@ -49,6 +48,8 @@ impl Jump {
     }
 
     // JSR - Jump to Subroutine
+    // The JSR instruction pushes the address (minus one) of the return point on to the stack and
+    // then sets the program counter to the target memory address.
     pub fn jsr(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         if opcode.address_mode != AddressMode::Absolute {
             return InstructionResult::IllegalInstruction;
@@ -56,11 +57,11 @@ impl Jump {
 
         let subroutine_address = cpu.get_address(&opcode.address_mode);
 
-        cpu.program_counter += opcode.bytes as u16;
+        let return_address = cpu.program_counter + opcode.bytes as u16 - 1;
 
         // Get the high / lo bytes of the current PC
-        let hi_byte = (cpu.program_counter >> 8) as u8;
-        let lo_byte = (cpu.program_counter & 0x00FF) as u8;
+        let hi_byte = (return_address >> 8) as u8;
+        let lo_byte = (return_address & 0x00FF) as u8;
 
         if let Err(instruction_result) = Stack::push(cpu, hi_byte) {
             return instruction_result;
@@ -88,7 +89,7 @@ impl Jump {
         };
 
         let address = u16::from(lo) | (u16::from(hi) << 8);
-        cpu.program_counter = address;
+        cpu.program_counter = address + 1;
 
         InstructionResult::Ok
     }
@@ -154,7 +155,7 @@ mod test {
             None,
         );
 
-        let opcode = Helpers::create_opcode(2, AddressMode::Absolute);
+        let opcode = Helpers::create_opcode(3, AddressMode::Absolute);
 
         assert_eq!(InstructionResult::Ok, Jump::jsr(&opcode, &mut cpu));
 
@@ -188,7 +189,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, Jump::rts(&mut cpu));
 
-        assert_eq_hex!(0x1234, cpu.program_counter);
+        assert_eq_hex!(0x1235, cpu.program_counter);
     }
 
     #[test]

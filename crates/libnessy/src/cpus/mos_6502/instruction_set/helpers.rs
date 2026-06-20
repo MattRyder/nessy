@@ -52,14 +52,12 @@ impl Helpers {
             program_counter,
             stack_pointer,
             registers: registers.unwrap_or_default(),
-            status: status.unwrap_or_default(),
+            status: status.unwrap_or(Flags::empty()),
             ..Default::default()
         };
 
         if let Some(mem_values) = memory_values {
             for (addr, value) in mem_values {
-                use crate::cpus::mos_6502::bus::MemoryAccess;
-
                 cpu.bus.write(addr, value);
             }
         }

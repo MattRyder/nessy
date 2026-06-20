@@ -1,7 +1,7 @@
 use crate::{
     cpus::mos_6502::{
-        address_mode::MemoryAddressing, bus::MemoryAccess, cpu::Mos6502,
-        instruction_set::helpers::MSB_MASK, opcode::OpCode, status::Flags,
+        address_mode::MemoryAddressing, cpu::Mos6502, instruction_set::helpers::MSB_MASK,
+        opcode::OpCode, status::Flags,
     },
     interpret_result::InstructionResult,
 };
@@ -39,7 +39,7 @@ impl Arithmetic {
 
         cpu.status.set_negative_flag(result);
 
-        let overflow_set = ((accumulator ^ result) & (accumulator ^ m) & MSB_MASK) != 0;
+        let overflow_set = (!(accumulator ^ m) & (accumulator ^ result) & MSB_MASK) != 0;
 
         cpu.status.set_status_flag(Flags::OVERFLOW, overflow_set);
 
@@ -141,8 +141,9 @@ mod test {
     #[case(Flags::empty(), 0x01, 0x01, 0x02, Flags::empty())]
     #[case(Flags::CARRY, 0x01, 0x01, 0x03, Flags::empty())]
     #[case(Flags::empty(), 0x00, 0x00, 0x00, Flags::ZERO)]
-    #[case(Flags::empty(), 0xFF, 0x01, 0x00, Flags::CARRY | Flags::ZERO | Flags::OVERFLOW)]
-    #[case(Flags::CARRY, 0xFF, 0x01, 0x01, Flags::CARRY | Flags::OVERFLOW)]
+    #[case(Flags::empty(), 0xFF, 0x01, 0x00, Flags::CARRY | Flags::ZERO)]
+    #[case(Flags::CARRY, 0xFF, 0x01, 0x01, Flags::CARRY)]
+    #[case(Flags::CARRY, 0x7F, 0x7F, 0xFF, Flags::OVERFLOW | Flags::NEGATIVE)]
     fn test_adc_works_given_flags(
         cpu_flags: Flags,
         accumulator: u8,

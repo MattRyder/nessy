@@ -1,14 +1,5 @@
 use crate::roms::ROM;
 
-pub trait MemoryAccess {
-    fn read(&self, address: u16) -> u8;
-    fn write(&mut self, address: u16, data: u8);
-    fn write_slice(&mut self, start_address: u16, data: &[u8]);
-
-    fn read_u16(&self, address: u16) -> u16;
-    fn write_u16(&mut self, address: u16, data: u16);
-}
-
 // Constants
 const MEMORY_SIZE: usize = 2048;
 
@@ -40,6 +31,17 @@ const PPU_REGISTERS_MASK: u16 = 0x2007;
 const CARTRIDGE_START: u16 = 0x4020;
 const CARTRIDGE_END: u16 = 0xFFFF;
 
+pub trait MemoryBus {
+    fn read(&self, address: u16) -> u8;
+    fn write(&mut self, address: u16, data: u8);
+    fn write_slice(&mut self, start_address: u16, data: &[u8]);
+
+    fn read_u16(&self, address: u16) -> u16;
+    fn write_u16(&mut self, address: u16, data: u16);
+
+    fn insert_rom(&mut self, rom: ROM);
+}
+
 #[derive(Debug)]
 pub struct Bus {
     cpu_memory: [u8; MEMORY_SIZE],
@@ -60,13 +62,9 @@ impl Bus {
     pub fn new(cpu_memory: [u8; MEMORY_SIZE], rom: Option<ROM>) -> Self {
         Self { cpu_memory, rom }
     }
-
-    pub fn insert_rom(&mut self, rom: ROM) {
-        self.rom = Some(rom);
-    }
 }
 
-impl MemoryAccess for Bus {
+impl MemoryBus for Bus {
     fn read(&self, address: u16) -> u8 {
         match address {
             CPU_RAM_START..=CPU_RAM_MIRROR_RANGE_END => {
@@ -158,9 +156,8 @@ impl MemoryAccess for Bus {
                 todo!("PPU read_u16");
             }
             CARTRIDGE_START..=CARTRIDGE_END => {
-                let addr_u16 = address; //- CARTRIDGE_START;
-                let lo_byte = self.read(addr_u16) as u16;
-                let hi_byte = self.read(addr_u16 + 1) as u16;
+                let lo_byte = self.read(address) as u16;
+                let hi_byte = self.read(address + 1) as u16;
                 (hi_byte << 8) | lo_byte
             }
             _ => {
@@ -195,11 +192,16 @@ impl MemoryAccess for Bus {
             }
         }
     }
+
+    fn insert_rom(&mut self, rom: ROM) {
+        self.rom = Some(rom);
+    }
 }
 
 #[cfg(test)]
 mod test {
     use assert_hex::assert_eq_hex;
+    use sif::parameterized;
 
     use super::*;
 
@@ -229,12 +231,17 @@ mod test {
         assert_eq_hex!(0xAA, bus.cpu_memory[0x400]);
     }
 
-    #[test]
-    fn test_read_u16_returns_correct_value() {
-        let memory = setup_memory(vec![(0x50, 0xAA), (0x51, 0xBB)]);
+    #[parameterized]
+    #[case(vec![(0x50, 0xAA), (0x51, 0xBB)], 0x50, 0xBBAA)]
+    fn test_read_u16_returns_correct_value(
+        memory: Vec<(u8, u8)>,
+        address: u16,
+        expected_value: u16,
+    ) {
+        let memory = setup_memory(memory);
         let bus = Bus::new(memory, None);
 
-        assert_eq_hex!(0xBBAA, bus.read_u16(0x50));
+        assert_eq_hex!(expected_value, bus.read_u16(address));
     }
 
     #[test]

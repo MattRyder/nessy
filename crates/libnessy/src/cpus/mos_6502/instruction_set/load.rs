@@ -1,7 +1,5 @@
 use crate::{
-    cpus::mos_6502::{
-        address_mode::MemoryAddressing, bus::MemoryAccess, cpu::Mos6502, opcode::OpCode,
-    },
+    cpus::mos_6502::{address_mode::MemoryAddressing, cpu::Mos6502, opcode::OpCode},
     interpret_result::InstructionResult,
 };
 
@@ -56,16 +54,14 @@ mod test {
 
     use super::*;
     use crate::cpus::mos_6502::{
-        address_mode::AddressMode,
-        bus::{Bus, MemoryAccess},
-        instruction_set::helpers::Helpers,
-        status::Flags,
+        address_mode::AddressMode, bus::Bus, instruction_set::helpers::Helpers, status::Flags,
     };
 
     fn create_cpu(memory_value: u8) -> Mos6502 {
         let mut cpu = Mos6502 {
-            bus: Bus::default(),
+            bus: Box::new(Bus::default()),
             program_counter: 0xAA,
+            status: Flags::empty(),
             ..Default::default()
         };
 

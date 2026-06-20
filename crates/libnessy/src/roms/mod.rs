@@ -5,8 +5,12 @@ pub mod mirroring;
 
 #[derive(Debug)]
 pub struct ROM {
+    #[allow(dead_code)]
     metadata: Metadata,
+
     prg_rom: Vec<u8>,
+
+    #[allow(dead_code)]
     chr_rom: Vec<u8>,
 }
 

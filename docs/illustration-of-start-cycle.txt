@@ -1,0 +1,30 @@
+https://web.archive.org/web/20190203123936/https://users.telenet.be/kim1-6502/6502/proman.html#92
+
+          Example 9.1: Illustration of Start Cycle
+
+     Cycles   Address Bus   Data Bus    External Operation     Internal Operation
+
+       1           ?           ?        Don't Care             Hold During Reset
+       2         ? + 1         ?        Don't Care             First Start State
+       3        0100 + SP      ?        Don't Care             Second Start State
+       4        0100 + SP-1    ?        Don't Care             Third Start State
+       5        0100 + SP-2    ?        Don't Care             Fourth Start State
+       6        FFFC        Start PCL   Fetch First Vector
+       7        FFFD        Start PCH   Fetch Second Vector    Hold PCL
+       8        PCH PCL     First       Load First OP CODE
+                            OP CODE
+
+
+          The start cycle actually takes seven cycles from the time the reset
+     line is let go to TTL plus.  On the eighth cycle, the vector fetched from
+     the memory location FFFC and FFFD is used to access the next instruction.
+     The microprocessor is now in a normal program load sequence, the location
+     where the vector points should be the first OP CODE which the programmer
+     desires to perform.
+          The second point that should be noted is that the microprocessor
+     actually accesses the stack three times during the start sequence in
+     cycles 3, 4 and 5.  This is because the start sequence is in effect a
+     specialized form of interrupt with the exception that the read/write line
+     is disabled so that no writes to stack are accomplished during any of the
+     cycles.
+
