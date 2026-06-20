@@ -1,7 +1,6 @@
 use crate::{
     cpus::mos_6502::{
-        bus::{Bus, MemoryAccess},
-        memory::PROGRAM_ROM_START,
+        bus::{Bus, MemoryBus},
         opcode::OPCODES,
         status::Flags,
     },
@@ -20,29 +19,42 @@ pub const DEFAULT_FLAGS: u8 = 0b0010_0100;
 
 // Memory Addresses
 pub const RESET_VECTOR: u16 = 0xFFFC;
-pub const STACK_POINTER_RESET: u8 = 0xFF;
 
-#[derive(Default)]
+// This is set to 0xFD to account for the reset cycle.
+pub const STACK_POINTER_RESET: u8 = 0xFD;
+
 pub struct Mos6502 {
     pub registers: Registers,
     pub status: Flags,
     pub program_counter: u16,
     pub stack_pointer: u8,
-    pub bus: Bus,
+    pub bus: Box<dyn MemoryBus>,
+}
+
+impl Default for Mos6502 {
+    fn default() -> Self {
+        Self::new(Box::new(Bus::default()))
+    }
 }
 
 impl Mos6502 {
-    pub fn create_cpu_with_program(rom: ROM) -> Mos6502 {
-        let mut cpu = Mos6502::default();
-        cpu.load_program(rom);
-        cpu.reset();
-        cpu
+    pub fn new(bus: Box<dyn MemoryBus>) -> Self {
+        Self {
+            registers: Registers::default(),
+            status: Flags::from_bits_truncate(DEFAULT_FLAGS),
+            program_counter: 0,
+            stack_pointer: STACK_POINTER_RESET,
+            bus,
+        }
     }
 
+    // TODO: Implement the full ASM clone of the start cycle.
+    // see: docs/illustration-of-start-cycle.txt
     pub fn reset(&mut self) {
         self.registers = Registers::default();
         self.status = Flags::from_bits_truncate(DEFAULT_FLAGS);
         self.stack_pointer = STACK_POINTER_RESET;
+        self.program_counter = 0;
     }
 
     pub fn load_program(&mut self, rom: ROM) {

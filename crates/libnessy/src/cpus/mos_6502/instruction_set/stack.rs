@@ -1,5 +1,5 @@
 use crate::{
-    cpus::mos_6502::{bus::MemoryAccess, cpu::Mos6502, status::Flags},
+    cpus::mos_6502::{cpu::Mos6502, status::Flags},
     interpret_result::InstructionResult,
 };
 
@@ -53,6 +53,10 @@ impl Stack {
         match Stack::pop(cpu) {
             Ok(value) => {
                 cpu.registers.a = value;
+
+                cpu.status.set_zero_flag(cpu.registers.a);
+                cpu.status.set_negative_flag(cpu.registers.a);
+
                 InstructionResult::Ok
             }
             Err(result) => result,
@@ -61,7 +65,8 @@ impl Stack {
 
     // PHP - Push Processor Status
     pub fn php(cpu: &mut Mos6502) -> InstructionResult {
-        match Stack::push(cpu, cpu.status.bits()) {
+        // Set BREAK_COMMAND before pushing P to the stack.
+        match Stack::push(cpu, (cpu.status | Flags::BREAK_COMMAND).bits()) {
             Err(err) => err,
             _ => InstructionResult::Ok,
         }
@@ -71,7 +76,7 @@ impl Stack {
     pub fn plp(cpu: &mut Mos6502) -> InstructionResult {
         match Stack::pop(cpu) {
             Ok(v) => {
-                cpu.status = Flags::from_bits_truncate(v);
+                cpu.status = (Flags::from_bits_truncate(v) & !Flags::BREAK_COMMAND) | Flags::UNUSED;
                 InstructionResult::Ok
             }
             Err(err) => err,
@@ -82,10 +87,10 @@ impl Stack {
 #[cfg(test)]
 mod test {
     use assert_hex::assert_eq_hex;
+    use sif::parameterized;
 
     use super::*;
     use crate::cpus::mos_6502::{
-        bus::MemoryAccess,
         cpu::{Mos6502, Registers},
         instruction_set::helpers::Helpers,
         status::Flags,
@@ -131,16 +136,21 @@ mod test {
         assert_eq!(InstructionResult::StackOverflow, Stack::pha(&mut cpu));
     }
 
-    #[test]
-    fn test_pla_pushes_to_stack() {
+    #[parameterized]
+    #[case(0x01, Flags::empty())]
+    #[case(0x0, Flags::ZERO)]
+    #[case(0x80, Flags::NEGATIVE)]
+    fn test_pla_pushes_to_stack(value: u8, status: Flags) {
         // Test with a used stack.
-        let mut cpu = Helpers::create_cpu(0x0, 0xFE, Some(vec![(STACK_TOP, 0xAA)]), None, None);
+        let mut cpu = Helpers::create_cpu(0x0, 0xFE, Some(vec![(STACK_TOP, value)]), None, None);
 
         assert_eq!(InstructionResult::Ok, Stack::pla(&mut cpu));
 
         assert_eq_hex!(0xFF, cpu.stack_pointer);
 
-        assert_eq_hex!(0xAA, cpu.registers.a);
+        assert_eq_hex!(value, cpu.registers.a);
+
+        assert_eq_hex!(status, cpu.status);
     }
 
     #[test]
@@ -155,7 +165,11 @@ mod test {
 
     #[test]
     fn test_php_pushes_flags_to_stack() {
+        // Flags being set on the CPU before PHP
         let flags = Flags::CARRY | Flags::ZERO | Flags::NEGATIVE;
+
+        // PHP will ALWAYS set BREAK_COMMAND when it pushes P onto the stack.
+        let expected_flags = flags | Flags::BREAK_COMMAND;
 
         // Test with a used stack.
         let mut cpu =
@@ -166,16 +180,20 @@ mod test {
         assert_eq_hex!(0xFD, cpu.stack_pointer);
 
         let stack_flags = Flags::from_bits_truncate(cpu.bus.read(0x01FE));
-        assert_eq!(flags, stack_flags);
+
+        //
+        assert_eq!(expected_flags, stack_flags);
     }
 
-    #[test]
-    fn test_plp_pops_flags_from_stack() {
+    #[parameterized]
+    #[case(0x83, Flags::CARRY | Flags::ZERO | Flags::NEGATIVE | Flags::UNUSED)]
+    #[case(0xFF, Flags::all() & !Flags::BREAK_COMMAND)]
+    fn test_plp_pops_flags_from_stack(value: u8, flags: Flags) {
         // Test with a used stack.
         let mut cpu = Helpers::create_cpu(
             0x0,
             0xFE,
-            Some(vec![(STACK_TOP, 0x83)]),
+            Some(vec![(STACK_TOP, value)]),
             None,
             Some(Flags::DECIMAL_MODE),
         );
@@ -184,6 +202,6 @@ mod test {
 
         assert_eq_hex!(0xFF, cpu.stack_pointer);
 
-        assert_eq!(Flags::CARRY | Flags::ZERO | Flags::NEGATIVE, cpu.status);
+        assert_eq!(flags, cpu.status);
     }
 }

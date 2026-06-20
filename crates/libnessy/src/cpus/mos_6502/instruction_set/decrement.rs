@@ -1,7 +1,6 @@
 use crate::{
     cpus::mos_6502::{
         address_mode::{AddressMode, MemoryAddressing},
-        bus::MemoryAccess,
         cpu::Mos6502,
         instruction_set::helpers::MSB_MASK,
         opcode::OpCode,
@@ -83,7 +82,6 @@ mod test {
     use crate::{
         cpus::mos_6502::{
             address_mode::AddressMode,
-            bus::MemoryAccess,
             cpu::{Mos6502, Registers},
             instruction_set::{decrement::Decrement, helpers::Helpers},
             status::Flags,
@@ -120,6 +118,7 @@ mod test {
                 x: 0x01,
                 y: 0,
             },
+            status: Flags::empty(),
             ..Default::default()
         };
 
@@ -138,6 +137,7 @@ mod test {
     fn test_dey_decrements_y_value_and_sets_negative_flag() {
         let mut cpu = Mos6502 {
             registers: Registers { a: 0, x: 0, y: 0 },
+            status: Flags::empty(),
             ..Default::default()
         };
 

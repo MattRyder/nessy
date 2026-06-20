@@ -1,5 +1,3 @@
-use crate::cpus::mos_6502::bus::MemoryAccess;
-
 use super::cpu::Mos6502;
 
 #[derive(Debug, PartialEq)]

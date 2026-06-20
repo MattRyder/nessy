@@ -1,5 +1,5 @@
 use bitflags::bitflags;
-use libnessy::cpus::mos_6502::{bus::MemoryAccess, cpu::Mos6502};
+use libnessy::cpus::mos_6502::cpu::Mos6502;
 use sdl2::{
     event::{Event, EventPollIterator},
     keyboard::Keycode,

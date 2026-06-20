@@ -22,6 +22,8 @@ impl System {
     }
 
     // RTI - Return from Interrupt
+    // The RTI instruction is used at the end of an interrupt processing routine.
+    // It pulls the processor flags from the stack followed by the program counter.
     pub fn rti(cpu: &mut Mos6502) -> InstructionResult {
         let flags = match Stack::pop(cpu) {
             Ok(v) => v,
@@ -40,7 +42,7 @@ impl System {
 
         cpu.program_counter = u16::from(lo) | (u16::from(hi) << 8);
 
-        cpu.status = Flags::from_bits_truncate(flags);
+        cpu.status = Flags::from_bits_truncate(flags) | Flags::UNUSED;
 
         InstructionResult::Ok
     }
@@ -51,15 +53,14 @@ mod tests {
     use assert_hex::assert_eq_hex;
 
     use crate::{
-        cpus::mos_6502::{cpu::Mos6502, instruction_set::helpers::Helpers},
-        interpret_result::InstructionResult,
+        cpus::mos_6502::instruction_set::helpers::Helpers, interpret_result::InstructionResult,
     };
 
     use super::*;
 
     #[test]
     fn test_brk_returns_end_program() {
-        let mut cpu = Mos6502::default();
+        let mut cpu = Helpers::create_cpu(0x0, 0x0, None, None, None);
 
         assert_eq!(InstructionResult::EndProgram, System::brk(&mut cpu));
         assert_eq_hex!(INTERRUPT_VECTOR, cpu.program_counter);
@@ -83,7 +84,10 @@ mod tests {
 
         assert_eq!(InstructionResult::Ok, System::rti(&mut cpu));
 
-        assert_eq!(Flags::CARRY | Flags::NEGATIVE | Flags::ZERO, cpu.status);
+        assert_eq!(
+            Flags::CARRY | Flags::NEGATIVE | Flags::UNUSED | Flags::ZERO,
+            cpu.status
+        );
 
         assert_eq_hex!(0xAABB, cpu.program_counter);
 

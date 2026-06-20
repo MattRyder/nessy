@@ -28,11 +28,11 @@ impl Set {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::cpus::mos_6502::cpu::Mos6502;
+    use crate::cpus::mos_6502::instruction_set::helpers::Helpers;
 
     #[test]
     fn test_sec_sets_carry_flag() {
-        let mut cpu = Mos6502::default();
+        let mut cpu = Helpers::create_cpu(0x0, 0x0, None, None, None);
 
         let result = Set::sec(&mut cpu);
 
@@ -42,7 +42,7 @@ mod test {
 
     #[test]
     fn test_sed_sets_decimal_mode_flag() {
-        let mut cpu = Mos6502::default();
+        let mut cpu = Helpers::create_cpu(0x0, 0x0, None, None, None);
 
         let result = Set::sed(&mut cpu);
 
@@ -52,7 +52,7 @@ mod test {
 
     #[test]
     fn test_sei_sets_interrupt_disable_flag() {
-        let mut cpu = Mos6502::default();
+        let mut cpu = Helpers::create_cpu(0x0, 0x0, None, None, None);
 
         let result = Set::sei(&mut cpu);
 

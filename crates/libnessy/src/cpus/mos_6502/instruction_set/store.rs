@@ -1,7 +1,5 @@
 use crate::{
-    cpus::mos_6502::{
-        address_mode::MemoryAddressing, bus::MemoryAccess, cpu::Mos6502, opcode::OpCode,
-    },
+    cpus::mos_6502::{address_mode::MemoryAddressing, cpu::Mos6502, opcode::OpCode},
     interpret_result::InstructionResult,
 };
 
@@ -46,7 +44,6 @@ impl Store {
 mod test {
     use crate::cpus::mos_6502::{
         address_mode::AddressMode,
-        bus::MemoryAccess,
         cpu::Registers,
         instruction_set::{helpers::Helpers, store::Store},
     };

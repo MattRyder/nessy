@@ -5,8 +5,8 @@ use std::{
     time::Duration,
 };
 
-use libnessy::{cpus::mos_6502::bus::MemoryAccess, nes::NES, roms::loader::Loader};
-use rand::{Rng, RngExt};
+use libnessy::{nes::NES, roms::loader::Loader};
+use rand::RngExt;
 
 use crate::{
     graphics_system::{GraphicsSystem, GraphicsSystemOptions},

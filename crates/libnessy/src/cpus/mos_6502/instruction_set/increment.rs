@@ -1,7 +1,6 @@
 use crate::{
     cpus::mos_6502::{
         address_mode::{AddressMode, MemoryAddressing},
-        bus::MemoryAccess,
         cpu::Mos6502,
         instruction_set::helpers::MSB_MASK,
         opcode::OpCode,
@@ -69,9 +68,7 @@ mod test {
 
     use super::*;
 
-    use crate::cpus::mos_6502::{
-        bus::MemoryAccess, cpu::Mos6502, instruction_set::helpers::Helpers,
-    };
+    use crate::cpus::mos_6502::instruction_set::helpers::Helpers;
 
     #[test]
     fn test_inc_increments_memory_value() {
@@ -98,7 +95,7 @@ mod test {
     #[case(0xFF, 0, Flags::ZERO)]
     #[case(0x7F, 0x80, Flags::NEGATIVE)]
     fn test_inx(x_reg: u8, expected_x_reg: u8, expected_flags: Flags) {
-        let mut cpu = Mos6502::default();
+        let mut cpu = Helpers::create_cpu(0x0, 0x0, None, None, None);
 
         cpu.registers.x = x_reg;
 
@@ -112,7 +109,7 @@ mod test {
     #[case(0xFF, 0, Flags::ZERO)]
     #[case(0x7F, 0x80, Flags::NEGATIVE)]
     fn test_iny(y_reg: u8, expected_y_reg: u8, expected_flags: Flags) {
-        let mut cpu = Mos6502::default();
+        let mut cpu = Helpers::create_cpu(0x0, 0x0, None, None, None);
 
         cpu.registers.y = y_reg;
 
