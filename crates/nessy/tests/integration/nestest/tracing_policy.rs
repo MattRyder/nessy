@@ -1,4 +1,4 @@
-use libnessy::cpus::mos_6502::cpu::Mos6502;
+use nessy::cpus::mos_6502::cpu::Mos6502;
 
 use crate::integration::{nestest::Nestest, tracing_policy::TracingPolicy};
 

@@ -5,7 +5,7 @@ use std::{
     time::Duration,
 };
 
-use libnessy::{nes::NES, roms::loader::Loader};
+use nessy::{nes::NES, roms::loader::Loader};
 use rand::RngExt;
 
 use crate::{

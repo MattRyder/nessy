@@ -1,4 +1,4 @@
-use libnessy::cpus::mos_6502::{cpu::Mos6502, opcode::OPCODES};
+use nessy::cpus::mos_6502::{cpu::Mos6502, opcode::OPCODES};
 
 use crate::integration::nestest::{
     disassembler::Disassembler,
@@ -13,8 +13,8 @@ pub mod tracing_policy;
 use std::fs::{self, File};
 use std::io::Write;
 
-use libnessy::nes::NES;
-use libnessy::roms::loader::Loader;
+use nessy::nes::NES;
+use nessy::roms::loader::Loader;
 
 use crate::integration::tracing_policy::TracingPolicy;
 use crate::integration::utils::get_asset_file_path;
@@ -66,8 +66,8 @@ impl Nestest {
 }
 
 #[test]
-#[ignore = "nestest requires more work in the illegal opcodes first..."]
-fn test_nestest_against_libnessy() {
+// #[ignore = "nestest requires more work in the illegal opcodes first..."]
+fn test_nessy_against_nestest() {
     let rom_file_path_buf = get_asset_file_path("nestest/nestest.nes");
     let rom_file_path = rom_file_path_buf.to_str().unwrap();
 

@@ -1,4 +1,4 @@
-use libnessy::cpus::mos_6502::{address_mode::AddressMode, cpu::Mos6502, opcode::OpCode};
+use nessy::cpus::mos_6502::{address_mode::AddressMode, cpu::Mos6502, opcode::OpCode};
 
 use crate::integration::nestest::opcode_behaviour::OpcodeBehaviour;
 
@@ -203,11 +203,11 @@ impl Disassembler {
 
 #[cfg(test)]
 mod test {
-    use libnessy::{
+    use mockall::{mock, predicate};
+    use nessy::{
         cpus::mos_6502::{address_mode::AddressMode, bus::MemoryBus, cpu::Mos6502, opcode::OpCode},
         interpret_result::InstructionResult,
     };
-    use mockall::{mock, predicate};
     use sif::parameterized;
 
     use crate::integration::nestest::Disassembler;
@@ -232,7 +232,7 @@ mod test {
             fn read_u16(&self, address: u16) -> u16;
             fn write_u16(&mut self, address: u16, data: u16);
 
-            fn insert_rom(&mut self, rom: libnessy::roms::ROM);
+            fn insert_rom(&mut self, rom: nessy::roms::ROM);
         }
     }
 
