@@ -28,18 +28,48 @@ use crate::{
 use lazy_static::lazy_static;
 
 macro_rules! generate_opcodes {
-    ( $( ($opcode:expr, $instruction:expr, $bytes:expr, $cycles:expr, $address_mode:expr, $execute:expr) ),* $(,)? ) => {{
+    // Entry point to generate that hashmap.
+    ( $( $opcode:tt ),* $(,)? ) => {{
         let mut hash_map = HashMap::new();
         $(
-            hash_map.insert($opcode, OpCode::new($opcode, $instruction, $bytes, $cycles, $address_mode, $execute));
+            generate_opcodes!(@insert hash_map, $opcode);
         )*
         hash_map
-}}
+    }};
+
+    // Inserting the documented opcodes, defaulting to true
+    (@insert $hashmap:ident, (
+        $opcode:expr,
+        $instruction:expr,
+        $bytes:expr,
+        $cycles:expr,
+        $address_mode:expr,
+        $execute:expr)) => {
+            $hashmap.insert(
+                $opcode,
+                OpCode::new($opcode, $instruction, $bytes, $cycles, $address_mode, false, $execute)
+            );
+        };
+
+    // Inserting the undocumented opcodes
+    (@insert $hashmap:ident, (
+        $opcode:expr,
+        $instruction:expr,
+        $bytes:expr,
+        $cycles:expr,
+        $address_mode:expr,
+        $undocumented:expr,
+        $execute:expr)) => {
+            $hashmap.insert(
+                $opcode,
+                OpCode::new($opcode, $instruction, $bytes, $cycles, $address_mode, $undocumented, $execute)
+            );
+        };
 }
 
 lazy_static! {
     #[rustfmt::skip]
-    // Opcode, Instruction, Bytes, Cycles, AddressMode
+    // Opcode, Mnemonic, Bytes, Cycles, AddressMode, (optional: Undocumented), Exec_fn
     pub static ref OPCODES: HashMap<u8, OpCode> = generate_opcodes!(
         (0x69, "ADC", 2, 2, AddressMode::Immediate, |opcode, cpu| { Arithmetic::adc(opcode, cpu) }),
         (0x65, "ADC", 2, 3, AddressMode::ZeroPage, |opcode, cpu| { Arithmetic::adc(opcode, cpu) }),
@@ -111,6 +141,14 @@ lazy_static! {
         (0xC4, "CPY", 2, 3, AddressMode::ZeroPage, |opcode, cpu| { Compare::cpy(opcode, cpu) }),
         (0xCC, "CPY", 3, 4, AddressMode::Absolute, |opcode, cpu| { Compare::cpy(opcode, cpu) }),
 
+        (0xC7, "DCP", 2, 5, AddressMode::ZeroPage, true, |opcode, cpu| { Decrement::dcp(opcode, cpu) }),
+        (0xD7, "DCP", 2, 6, AddressMode::ZeroPageX, true, |opcode, cpu| { Decrement::dcp(opcode, cpu) }),
+        (0xCF, "DCP", 3, 6, AddressMode::Absolute, true, |opcode, cpu| { Decrement::dcp(opcode, cpu) }),
+        (0xDF, "DCP", 3, 7, AddressMode::AbsoluteX, true, |opcode, cpu| { Decrement::dcp(opcode, cpu) }),
+        (0xDB, "DCP", 3, 7, AddressMode::AbsoluteY, true, |opcode, cpu| { Decrement::dcp(opcode, cpu) }),
+        (0xC3, "DCP", 2, 8, AddressMode::IndirectX, true, |opcode, cpu| { Decrement::dcp(opcode, cpu) }),
+        (0xD3, "DCP", 2, 8, AddressMode::IndirectY, true, |opcode, cpu| { Decrement::dcp(opcode, cpu) }),
+
         (0xC6, "DEC", 2, 5, AddressMode::ZeroPage, |opcode, cpu| { Decrement::dec(opcode, cpu) }),
         (0xD6, "DEC", 2, 6, AddressMode::ZeroPageX, |opcode, cpu| { Decrement::dec(opcode, cpu) }),
         (0xCE, "DEC", 3, 6, AddressMode::Absolute, |opcode, cpu| { Decrement::dec(opcode, cpu) }),
@@ -134,6 +172,14 @@ lazy_static! {
         (0xEE, "INC", 3, 6, AddressMode::Absolute, |opcode, cpu| { Increment::inc(opcode, cpu) }),
         (0xFE, "INC", 3, 7, AddressMode::AbsoluteX, |opcode, cpu| { Increment::inc(opcode, cpu) }),
 
+        (0xE7, "ISB", 2, 5, AddressMode::ZeroPage, true, |opcode, cpu| { Arithmetic::isb(opcode, cpu) }),
+        (0xF7, "ISB", 2, 6, AddressMode::ZeroPageX, true, |opcode, cpu| { Arithmetic::isb(opcode, cpu) }),
+        (0xEF, "ISB", 3, 6, AddressMode::Absolute, true, |opcode, cpu| { Arithmetic::isb(opcode, cpu) }),
+        (0xFF, "ISB", 3, 7, AddressMode::AbsoluteX, true, |opcode, cpu| { Arithmetic::isb(opcode, cpu) }),
+        (0xFB, "ISB", 3, 7, AddressMode::AbsoluteY, true, |opcode, cpu| { Arithmetic::isb(opcode, cpu) }),
+        (0xE3, "ISB", 2, 8, AddressMode::IndirectX, true, |opcode, cpu| { Arithmetic::isb(opcode, cpu) }),
+        (0xF3, "ISB", 2, 8, AddressMode::IndirectY, true, |opcode, cpu| { Arithmetic::isb(opcode, cpu) }),
+
         (0xE8, "INX", 1, 2, AddressMode::Implied, |_, cpu| { Increment::inx(cpu) }),
 
         (0xC8, "INY", 1, 2, AddressMode::Implied, |_, cpu| { Increment::iny(cpu) }),
@@ -142,6 +188,14 @@ lazy_static! {
         (0x6C, "JMP", 3, 5, AddressMode::None, |_, cpu| { Jump::jmp(cpu, JumpType::Indirect) }),
 
         (0x20, "JSR", 3, 6, AddressMode::Absolute, |opcode, cpu| { Jump::jsr(opcode, cpu) }),
+
+        // Undocumented
+        (0xA7, "LAX", 2, 3, AddressMode::ZeroPage, true, |opcode, cpu| { Load::lax(opcode, cpu) }),
+        (0xB7, "LAX", 2, 4, AddressMode::ZeroPageY, true, |opcode, cpu| { Load::lax(opcode, cpu) }),
+        (0xAF, "LAX", 3, 4, AddressMode::Absolute, true, |opcode, cpu| { Load::lax(opcode, cpu) }),
+        (0xBF, "LAX", 3, 4, AddressMode::AbsoluteY, true, |opcode, cpu| { Load::lax(opcode, cpu) }),
+        (0xA3, "LAX", 2, 6, AddressMode::IndirectX, true, |opcode, cpu| { Load::lax(opcode, cpu) }),
+        (0xB3, "LAX", 2, 5, AddressMode::IndirectY, true, |opcode, cpu| { Load::lax(opcode, cpu) }),
 
         (0xA9, "LDA", 2, 2, AddressMode::Immediate, |opcode, cpu| { Load::lda(opcode, cpu) }),
         (0xA5, "LDA", 2, 3, AddressMode::ZeroPage, |opcode, cpu| { Load::lda(opcode, cpu) }),
@@ -170,7 +224,40 @@ lazy_static! {
         (0x4E, "LSR", 3, 6, AddressMode::Absolute,|opcode, cpu| { Shift::lsr_memory(opcode, cpu) }),
         (0x5E, "LSR", 3, 7, AddressMode::AbsoluteX,|opcode, cpu| { Shift::lsr_memory(opcode, cpu) }),
 
-        (0xEA, "NOP", 1, 2, AddressMode::Implied, |_, _| { System::nop() }),
+        (0xEA, "NOP", 1, 2, AddressMode::Implied, |opcode, cpu| { System::nop(opcode, cpu) }),
+
+        // Undocumented NOP opcodes:
+        (0x1A, "NOP", 1, 2, AddressMode::Implied, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x3A, "NOP", 1, 2, AddressMode::Implied, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x5A, "NOP", 1, 2, AddressMode::Implied, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x7A, "NOP", 1, 2, AddressMode::Implied, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0xDA, "NOP", 1, 2, AddressMode::Implied, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0xFA, "NOP", 1, 2, AddressMode::Implied, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+
+        // Undocumented `DOP` opcode, basically a double NOP
+        (0x04, "NOP", 2, 3, AddressMode::ZeroPage, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x14, "NOP", 2, 4, AddressMode::ZeroPageX, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x34, "NOP", 2, 4, AddressMode::ZeroPageX, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x44, "NOP", 2, 3, AddressMode::ZeroPage, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x54, "NOP", 2, 4, AddressMode::ZeroPageX, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x64, "NOP", 2, 3, AddressMode::ZeroPage, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x74, "NOP", 2, 4, AddressMode::ZeroPageX, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x80, "NOP", 2, 2, AddressMode::Immediate, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x82, "NOP", 2, 2, AddressMode::Immediate, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x89, "NOP", 2, 2, AddressMode::Immediate, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0xC2, "NOP", 2, 2, AddressMode::Immediate, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0xD4, "NOP", 2, 4, AddressMode::ZeroPageX, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0xE2, "NOP", 2, 2, AddressMode::Immediate, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0xF4, "NOP", 2, 4, AddressMode::ZeroPageX, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+
+        // Undocumented `TOP` opcode, basically a triple NOP
+        (0x0C, "NOP", 3, 4, AddressMode::Absolute, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x1C, "NOP", 3, 4, AddressMode::AbsoluteX, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x3C, "NOP", 3, 4, AddressMode::AbsoluteX, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x5C, "NOP", 3, 4, AddressMode::AbsoluteX, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0x7C, "NOP", 3, 4, AddressMode::AbsoluteX, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0xDC, "NOP", 3, 4, AddressMode::AbsoluteX, true, |opcode, cpu| { System::nop(opcode, cpu) }),
+        (0xFC, "NOP", 3, 4, AddressMode::AbsoluteX, true, |opcode, cpu| { System::nop(opcode, cpu) }),
 
         (0x09, "ORA", 2, 2, AddressMode::Immediate, |opcode, cpu| { Logical::ora(opcode, cpu) }),
         (0x05, "ORA", 2, 3, AddressMode::ZeroPage, |opcode, cpu| { Logical::ora(opcode, cpu) }),
@@ -189,9 +276,42 @@ lazy_static! {
 
         (0x68, "PLA", 1, 4, AddressMode::Implied, |_, cpu| { Stack::pla(cpu) }),
 
+        (0x67, "RRA", 2, 5, AddressMode::ZeroPage, true, |opcode, cpu| { Arithmetic::rra(opcode, cpu) }),
+        (0x77, "RRA", 2, 6, AddressMode::ZeroPageX, true, |opcode, cpu| { Arithmetic::rra(opcode, cpu) }),
+        (0x6F, "RRA", 3, 6, AddressMode::Absolute, true, |opcode, cpu| { Arithmetic::rra(opcode, cpu) }),
+        (0x7F, "RRA", 3, 7, AddressMode::AbsoluteX, true, |opcode, cpu| { Arithmetic::rra(opcode, cpu) }),
+        (0x7B, "RRA", 3, 7, AddressMode::AbsoluteY, true, |opcode, cpu| { Arithmetic::rra(opcode, cpu) }),
+        (0x63, "RRA", 2, 8, AddressMode::IndirectX, true, |opcode, cpu| { Arithmetic::rra(opcode, cpu) }),
+        (0x73, "RRA", 2, 8, AddressMode::IndirectY, true, |opcode, cpu| { Arithmetic::rra(opcode, cpu) }),
+
+
+        // Undocumented
+        (0x27, "RLA", 2, 5, AddressMode::ZeroPage, true, |opcode, cpu| { Logical::rla(opcode, cpu) }),
+        (0x37, "RLA", 2, 6, AddressMode::ZeroPageX, true, |opcode, cpu| { Logical::rla(opcode, cpu) }),
+        (0x2F, "RLA", 3, 6, AddressMode::Absolute, true, |opcode, cpu| { Logical::rla(opcode, cpu) }),
+        (0x3F, "RLA", 3, 7, AddressMode::AbsoluteX, true, |opcode, cpu| { Logical::rla(opcode, cpu) }),
+        (0x3B, "RLA", 3, 7, AddressMode::AbsoluteY, true, |opcode, cpu| { Logical::rla(opcode, cpu) }),
+        (0x23, "RLA", 2, 5, AddressMode::IndirectX, true, |opcode, cpu| { Logical::rla(opcode, cpu) }),
+        (0x33, "RLA", 2, 5, AddressMode::IndirectY, true, |opcode, cpu| { Logical::rla(opcode, cpu) }),
+
         (0x60, "RTS", 1, 6, AddressMode::Implied, |_, cpu| { Jump::rts(cpu) }),
 
         (0x40, "RTI", 1, 6, AddressMode::Implied, |_, cpu| { System::rti(cpu) }),
+
+        // Undocumented
+        (0x87, "SAX", 2, 3, AddressMode::ZeroPage, true, |opcode, cpu| { Store::sax(opcode, cpu) }),
+        (0x97, "SAX", 2, 4, AddressMode::ZeroPageY, true, |opcode, cpu| { Store::sax(opcode, cpu) }),
+        (0x83, "SAX", 2, 6, AddressMode::IndirectX, true, |opcode, cpu| { Store::sax(opcode, cpu) }),
+        (0x8F, "SAX", 3, 4, AddressMode::Absolute, true, |opcode, cpu| { Store::sax(opcode, cpu) }),
+
+        (0x47, "SRE", 2, 5, AddressMode::ZeroPage, true, |opcode, cpu| { Logical::sre(opcode, cpu) }),
+        (0x57, "SRE", 2, 6, AddressMode::ZeroPageX, true, |opcode, cpu| { Logical::sre(opcode, cpu) }),
+        (0x4F, "SRE", 3, 6, AddressMode::Absolute, true, |opcode, cpu| { Logical::sre(opcode, cpu) }),
+        (0x5F, "SRE", 3, 7, AddressMode::AbsoluteX, true, |opcode, cpu| { Logical::sre(opcode, cpu) }),
+        (0x5B, "SRE", 3, 7, AddressMode::AbsoluteY, true, |opcode, cpu| { Logical::sre(opcode, cpu) }),
+        (0x43, "SRE", 2, 8, AddressMode::IndirectX, true, |opcode, cpu| { Logical::sre(opcode, cpu) }),
+        (0x53, "SRE", 2, 8, AddressMode::IndirectY, true, |opcode, cpu| { Logical::sre(opcode, cpu) }),
+
 
         (0x85, "STA", 2, 3, AddressMode::ZeroPage, |opcode, cpu| { Store::sta(opcode, cpu) }),
         (0x95, "STA", 2, 4, AddressMode::ZeroPageX, |opcode, cpu| { Store::sta(opcode, cpu) }),
@@ -218,9 +338,22 @@ lazy_static! {
         (0xE1, "SBC", 2, 6, AddressMode::IndirectX, |opcode, cpu| { Arithmetic::sbc(opcode, cpu) }),
         (0xF1, "SBC", 2, 5, AddressMode::IndirectY, |opcode, cpu| { Arithmetic::sbc(opcode, cpu) }),
 
+        // an undocumented version of SBC
+        (0xEB, "SBC", 2, 2, AddressMode::Immediate, true, |opcode, cpu| { Arithmetic::sbc(opcode, cpu) }),
+
         (0x38, "SEC", 1, 2, AddressMode::Implied, |_, cpu| { Set::sec(cpu) }),
         (0xF8, "SED", 1, 2, AddressMode::Implied, |_, cpu| { Set::sed(cpu) }),
         (0x78, "SEI", 1, 2, AddressMode::Implied, |_, cpu| { Set::sei(cpu) }),
+
+        (0x78, "SEI", 1, 2, AddressMode::Implied, |_, cpu| { Set::sei(cpu) }),
+
+        (0x07, "SLO", 2, 5, AddressMode::ZeroPage, true, |opcode, cpu| { Logical::slo(opcode, cpu) }),
+        (0x17, "SLO", 2, 6, AddressMode::ZeroPageX, true, |opcode, cpu| { Logical::slo(opcode, cpu) }),
+        (0x0F, "SLO", 3, 6, AddressMode::Absolute, true, |opcode, cpu| { Logical::slo(opcode, cpu) }),
+        (0x1F, "SLO", 3, 7, AddressMode::AbsoluteX, true, |opcode, cpu| { Logical::slo(opcode, cpu) }),
+        (0x1B, "SLO", 3, 7, AddressMode::AbsoluteY, true, |opcode, cpu| { Logical::slo(opcode, cpu) }),
+        (0x03, "SLO", 2, 5, AddressMode::IndirectX, true, |opcode, cpu| { Logical::slo(opcode, cpu) }),
+        (0x13, "SLO", 2, 5, AddressMode::IndirectY, true, |opcode, cpu| { Logical::slo(opcode, cpu) }),
 
         (0x2A, "ROL", 1, 2, AddressMode::Accumulator, |_, cpu| { Rotate::rotate_accumulator(cpu, Direction::Left) }),
         (0x26, "ROL", 2, 5, AddressMode::ZeroPage, |opcode, cpu| { Rotate::rotate_memory(opcode, cpu, Direction::Left) }),
@@ -255,6 +388,7 @@ pub struct OpCode {
     pub bytes: u8,
     pub cycles: u8,
     pub address_mode: AddressMode,
+    pub undocumented: bool,
     pub execute: fn(&OpCode, &mut Mos6502) -> InstructionResult,
 }
 
@@ -265,6 +399,7 @@ impl OpCode {
         bytes: u8,
         cycles: u8,
         address_mode: AddressMode,
+        undocumented: bool,
         execute: fn(&OpCode, &mut Mos6502) -> InstructionResult,
     ) -> Self {
         OpCode {
@@ -273,6 +408,7 @@ impl OpCode {
             bytes: bytes - 1,
             cycles,
             address_mode,
+            undocumented,
             execute,
         }
     }
@@ -289,9 +425,8 @@ mod test {
             InstructionResult::Ok
         }
 
-        let opcode = OpCode::new(0x00, "BRK", 1, 7, AddressMode::Implied, |opcode, cpu| {
-            fun_name(opcode, cpu)
-        });
+        let opcode = OpCode::new(0x00, "BRK", 1, 7, AddressMode::Implied, false, fun_name);
+
         assert_eq!(0x00, opcode.opcode);
         assert_eq!("BRK", opcode.mnemonic);
         assert_eq!(0, opcode.bytes);
@@ -301,6 +436,6 @@ mod test {
 
     #[test]
     fn test_opcodes_count() {
-        assert_eq!(151, OPCODES.len());
+        assert_eq!(231, OPCODES.len());
     }
 }

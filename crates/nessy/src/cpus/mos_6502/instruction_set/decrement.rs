@@ -2,7 +2,7 @@ use crate::{
     cpus::mos_6502::{
         address_mode::{AddressMode, MemoryAddressing},
         cpu::Mos6502,
-        instruction_set::helpers::MSB_MASK,
+        instruction_set::{compare::Compare, helpers::MSB_MASK},
         opcode::OpCode,
         status::Flags,
     },
@@ -73,11 +73,27 @@ impl Decrement {
 
         InstructionResult::Ok
     }
+
+    // DCP - Subtract 1 from memory (without borrow) then compare it against A. [undocumented]
+    pub fn dcp(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
+        let address = cpu.get_address(&opcode.address_mode);
+        cpu.program_counter += opcode.bytes as u16;
+
+        let memory_value = cpu.bus.read(address);
+        let result = memory_value.wrapping_sub(1);
+
+        cpu.bus.write(address, result);
+
+        Compare::compare_set_flags(cpu, cpu.registers.a, result);
+
+        InstructionResult::Ok
+    }
 }
 
 #[cfg(test)]
 mod test {
     use assert_hex::assert_eq_hex;
+    use sif::parameterized;
 
     use crate::{
         cpus::mos_6502::{
@@ -150,5 +166,34 @@ mod test {
         assert_eq_hex!(0xFF, cpu.registers.y);
 
         assert_eq!(Flags::NEGATIVE, cpu.status);
+    }
+
+    #[parameterized]
+    #[case(0x07, 0x04, 0x03, Flags::CARRY)]
+    #[case(0x00, 0x00, 0xFF, Flags::empty())]
+    #[case(0x50, 0x81, 0x80, Flags::NEGATIVE)]
+    #[case(0x50, 0x51, 0x50, Flags::CARRY | Flags::ZERO)]
+    fn test_dcp(accumulator: u8, memory_value: u8, expected_result: u8, expected_flags: Flags) {
+        let mut cpu = Helpers::create_cpu(
+            0x55,
+            0x0,
+            Some(vec![(0x55, 0xAA), (0xAA, memory_value)]),
+            Some(Registers {
+                a: accumulator,
+                x: 0,
+                y: 0,
+            }),
+            Some(Flags::empty()),
+        );
+
+        let opcode = Helpers::create_opcode(2, AddressMode::ZeroPage);
+
+        let result = Decrement::dcp(&opcode, &mut cpu);
+
+        assert_eq!(InstructionResult::Ok, result);
+
+        assert_eq_hex!(expected_result, cpu.bus.read(0xAA));
+
+        assert_eq!(expected_flags, cpu.status);
     }
 }

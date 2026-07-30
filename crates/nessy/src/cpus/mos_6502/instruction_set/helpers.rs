@@ -32,7 +32,7 @@ impl Helpers {
     pub fn create_opcode(bytes: u8, address_mode: AddressMode) -> OpCode {
         use crate::cpus::mos_6502::opcode::OpCode;
 
-        OpCode::new(0xFF, "TEST", bytes, 1, address_mode, |_, _| {
+        OpCode::new(0xFF, "TEST", bytes, 1, address_mode, false, |_, _| {
             use crate::interpret_result::InstructionResult;
 
             InstructionResult::Ok

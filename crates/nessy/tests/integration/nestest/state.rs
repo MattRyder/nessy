@@ -12,6 +12,7 @@ pub struct CpuState {
 pub struct OpcodeState {
     pub opcode_bytes: Vec<u8>,
     pub opcode_string: String,
+    pub undocumented: bool,
 }
 
 pub struct State {
@@ -23,7 +24,7 @@ impl Display for State {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{:<04X}  {:<9} {:<31} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+            "{:<04X}  {:<8} {}{:<31} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
             self.cpu.pc,
             self.opcode
                 .opcode_bytes
@@ -31,6 +32,7 @@ impl Display for State {
                 .map(|byte| format!("{:02X}", byte))
                 .collect::<Vec<String>>()
                 .join(" "),
+            if self.opcode.undocumented { "*" } else { " " },
             self.opcode.opcode_string,
             self.cpu.a,
             self.cpu.x,

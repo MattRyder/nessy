@@ -12,7 +12,7 @@ use crate::{
 pub struct Compare {}
 
 impl Compare {
-    fn compare_set_flags(cpu: &mut Mos6502, left_operand: u8, right_operand: u8) {
+    pub fn compare_set_flags(cpu: &mut Mos6502, left_operand: u8, right_operand: u8) {
         let result = left_operand.wrapping_sub(right_operand);
 
         cpu.status

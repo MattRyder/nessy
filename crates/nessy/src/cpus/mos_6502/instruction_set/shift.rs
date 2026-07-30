@@ -11,7 +11,7 @@ use crate::{
 pub struct Shift {}
 
 impl Shift {
-    fn arithmetic_shift(cpu: &mut Mos6502, value: u8) -> u8 {
+    pub fn arithmetic_shift(cpu: &mut Mos6502, value: u8) -> u8 {
         let shifted_result = value.shl(1);
 
         cpu.status
@@ -22,7 +22,7 @@ impl Shift {
         shifted_result
     }
 
-    fn logical_shift(cpu: &mut Mos6502, value: u8) -> u8 {
+    pub fn logical_shift(cpu: &mut Mos6502, value: u8) -> u8 {
         let shifted_result = value.shr(1);
 
         cpu.status.set_status_flag(Flags::CARRY, value & 0x01 != 0);

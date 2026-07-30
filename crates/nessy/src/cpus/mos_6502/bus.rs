@@ -104,6 +104,9 @@ impl MemoryBus for Bus {
     }
 
     fn write(&mut self, address: u16, data: u8) {
+        if address == 0x4015 {
+            println!("ARSE: {:02X}", data);
+        }
         match address {
             CPU_RAM_START..=CPU_RAM_MIRROR_RANGE_END => {
                 let addr = (address & CPU_RAM_ADDRESS_MASK) as usize;

@@ -46,11 +46,26 @@ impl Load {
 
         InstructionResult::Ok
     }
+
+    // LAX - Load accumulator and X register with memory. [undocumented]
+    pub fn lax(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
+        let address = cpu.get_address(&opcode.address_mode);
+
+        let value = cpu.bus.read(address);
+        cpu.registers.a = value;
+        cpu.registers.x = value;
+
+        Load::set_flags(cpu, value);
+        cpu.program_counter += opcode.bytes as u16;
+
+        InstructionResult::Ok
+    }
 }
 
 #[cfg(test)]
 mod test {
     use assert_hex::assert_eq_hex;
+    use sif::parameterized;
 
     use super::*;
     use crate::cpus::mos_6502::{
@@ -141,5 +156,29 @@ mod test {
         Load::ldy(&opcode, &mut cpu);
 
         assert_eq!(Flags::NEGATIVE, cpu.status);
+    }
+
+    #[parameterized]
+    #[case(0x00, Flags::ZERO)]
+    #[case(0x05, Flags::empty())]
+    #[case(0x80, Flags::NEGATIVE)]
+    #[case(0xFF, Flags::NEGATIVE)]
+    fn test_lax(expected_register_value: u8, expected_status: Flags) {
+        let mut cpu = Helpers::create_cpu(
+            0xAA,
+            0x0,
+            Some(vec![(0xAA, 0x55), (0x55, expected_register_value)]),
+            None,
+            None,
+        );
+
+        let opcode = Helpers::create_opcode(2, AddressMode::ZeroPage);
+
+        assert_eq!(InstructionResult::Ok, Load::lax(&opcode, &mut cpu));
+
+        assert_eq_hex!(expected_register_value, cpu.registers.a);
+        assert_eq_hex!(expected_register_value, cpu.registers.x);
+
+        assert_eq!(expected_status, cpu.status);
     }
 }

@@ -86,7 +86,10 @@ impl Disassembler {
 
         match OpcodeBehaviour::from_mnemonic(opcode.mnemonic) {
             Some(opcode_behaviour) => {
-                if let OpcodeBehaviour::Read | OpcodeBehaviour::Write = opcode_behaviour {
+                if let OpcodeBehaviour::Read
+                | OpcodeBehaviour::Write
+                | OpcodeBehaviour::ReadModifyWrite = opcode_behaviour
+                {
                     // Get the byte of this opcode to add as the indirect value - ($FF,X)
                     let opcode_byte = cpu.bus.read(cpu.program_counter.wrapping_add(1));
 
@@ -119,7 +122,10 @@ impl Disassembler {
 
         match OpcodeBehaviour::from_mnemonic(opcode.mnemonic) {
             Some(opcode_behaviour) => {
-                if let OpcodeBehaviour::Read | OpcodeBehaviour::Write = opcode_behaviour {
+                if let OpcodeBehaviour::Read
+                | OpcodeBehaviour::Write
+                | OpcodeBehaviour::ReadModifyWrite = opcode_behaviour
+                {
                     // Get the byte of this opcode to add as the indirect value - ($FF),Y
                     let base_address = cpu.bus.read(cpu.program_counter.wrapping_add(1));
 
@@ -216,7 +222,7 @@ mod test {
     const LDA_MNEMONIC: &str = "LDA";
 
     fn create_opcode(mnemonic: &'static str, address_mode: AddressMode) -> OpCode {
-        OpCode::new(0xAA, mnemonic, 1, 1, address_mode, |_, _| {
+        OpCode::new(0xAA, mnemonic, 1, 1, address_mode, false, |_, _| {
             InstructionResult::Ok
         })
     }

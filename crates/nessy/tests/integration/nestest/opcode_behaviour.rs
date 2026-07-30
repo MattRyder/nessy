@@ -14,10 +14,11 @@ pub enum OpcodeBehaviour {
 impl OpcodeBehaviour {
     pub fn from_mnemonic(mnemonic: &str) -> Option<Self> {
         match mnemonic {
-            "ADC" | "AND" | "BIT" | "CMP" | "CPX" | "CPY" | "EOR" | "LDA" | "LDX" | "LDY"
-            | "ORA" | "SBC" => Some(OpcodeBehaviour::Read),
-            "STA" | "STX" | "STY" => Some(OpcodeBehaviour::Write),
-            "ASL" | "DEC" | "INC" | "LSR" | "ROL" | "ROR" => Some(OpcodeBehaviour::ReadModifyWrite),
+            "ADC" | "AND" | "BIT" | "CMP" | "CPX" | "CPY" | "EOR" | "LDA" | "LAX" | "LDX"
+            | "LDY" | "NOP" | "ORA" | "SBC" => Some(OpcodeBehaviour::Read),
+            "SAX" | "STA" | "STX" | "STY" => Some(OpcodeBehaviour::Write),
+            "ASL" | "DEC" | "DCP" | "INC" | "ISB" | "LSR" | "RLA" | "RRA" | "ROL" | "ROR"
+            | "SLO" | "SRE" => Some(OpcodeBehaviour::ReadModifyWrite),
             "BCC" | "BCS" | "BEQ" | "BMI" | "BNE" | "BPL" | "BVC" | "BVS" => {
                 Some(OpcodeBehaviour::Branch)
             }

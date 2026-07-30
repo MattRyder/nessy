@@ -23,7 +23,7 @@ impl Rotate {
     }
 
     // ROL - Rotate Left
-    fn rotate_left(cpu: &mut Mos6502, operand: u8) -> u8 {
+    pub fn rotate_left(cpu: &mut Mos6502, operand: u8) -> u8 {
         let old_carry = cpu.status.contains(Flags::CARRY);
         let new_carry = operand & MSB_MASK != 0;
 
@@ -35,7 +35,7 @@ impl Rotate {
     }
 
     // ROR - Rotate Right
-    fn rotate_right(cpu: &mut Mos6502, operand: u8) -> u8 {
+    pub fn rotate_right(cpu: &mut Mos6502, operand: u8) -> u8 {
         let old_carry = cpu.status.contains(Flags::CARRY);
         let new_carry = operand & LSB_MASK != 0;
 

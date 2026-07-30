@@ -1,5 +1,5 @@
 use crate::{
-    cpus::mos_6502::{cpu::Mos6502, instruction_set::stack::Stack, status::Flags},
+    cpus::mos_6502::{cpu::Mos6502, instruction_set::stack::Stack, opcode::OpCode, status::Flags},
     interpret_result::InstructionResult,
 };
 
@@ -17,7 +17,13 @@ impl System {
     }
 
     // NOP - No Operation
-    pub fn nop() -> InstructionResult {
+    // Also used for undocumented versions of NOP
+    // - DOP: Double NOP
+    // - TOP: Triple NOP
+    pub fn nop(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
+        // burn the opcode's byte, if it's present.
+        cpu.program_counter += opcode.bytes as u16;
+
         InstructionResult::Ok
     }
 
@@ -51,9 +57,11 @@ impl System {
 #[cfg(test)]
 mod tests {
     use assert_hex::assert_eq_hex;
+    use sif::parameterized;
 
     use crate::{
-        cpus::mos_6502::instruction_set::helpers::Helpers, interpret_result::InstructionResult,
+        cpus::mos_6502::{address_mode::AddressMode, instruction_set::helpers::Helpers},
+        interpret_result::InstructionResult,
     };
 
     use super::*;
@@ -67,9 +75,17 @@ mod tests {
         assert_eq_hex!(Flags::BREAK_COMMAND, cpu.status);
     }
 
-    #[test]
-    fn test_nop_does_nowt() {
-        assert_eq!(InstructionResult::Ok, System::nop());
+    #[parameterized]
+    #[case(1, 0x05)]
+    #[case(2, 0x06)]
+    #[case(3, 0x07)]
+    fn test_nop_does_nowt(bytes: u8, expected_pc: u16) {
+        let opcode = Helpers::create_opcode(bytes, AddressMode::Immediate);
+        let mut cpu = Helpers::create_cpu(0x05, 0x0, None, None, None);
+
+        assert_eq!(InstructionResult::Ok, System::nop(&opcode, &mut cpu));
+
+        assert_eq_hex!(expected_pc, cpu.program_counter);
     }
 
     #[test]
