@@ -1,7 +1,9 @@
 # Some settings for the nessy_bin
-title = "NESSY"
+title = "NES Emulator"
 
 [display]
-width = 320
-height = 320
+# width = 320
+width = 1280
+# height = 320
+height = 720
 clear_colour = [100, 149, 237]
