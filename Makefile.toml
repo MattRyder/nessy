@@ -1,0 +1,28 @@
+[config]
+default_to_workspace = false
+
+[tasks.build]
+command = "wasm-pack"
+args = ["build", "./crates/nessy_bin", "--target", "web"]
+
+[tasks.copy-index]
+command = "cp"
+args = [
+  "./crates/nessy_bin/build_assets/index_template.html",
+  "./crates/nessy_bin/pkg/index.html",
+]
+
+[tasks.copy-headers]
+command = "cp"
+args = [
+  "./crates/nessy_bin/build_assets/_headers",
+  "./crates/nessy_bin/pkg/_headers",
+]
+
+[tasks.web]
+dependencies = ["build", "copy-headers", "copy-index"]
+
+[tasks.serve]
+command = "python"
+args = ["-m", "http.server", "8080", "-d", "./crates/nessy_bin/pkg"]
+dependencies = ["web", "copy-index", "copy-headers"]

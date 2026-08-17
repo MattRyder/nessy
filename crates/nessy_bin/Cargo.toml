@@ -3,13 +3,39 @@ name = "nessy_bin"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 nessy = { version = "0.1.0", path = "../nessy" }
-sdl2 = "0.38.0"
 serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.4"
 bitflags = "2.13.1"
-rand = "0.10.2"
+
+# UI
+## Windowing / WGPU
+anyhow = "1.0"
+async-std = { version = "1.13.2", features = ["attributes"] }
+egui = "0.35"
+egui-wgpu = { version = "0.35", features = ["winit"] }
+log = "0.4"
+web-time = "1.1.0"
+winit = "0.30"
+wgpu = "29.0"
+bytemuck = "1.25.2"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+egui-winit = { version = "0.35", features = ["wayland"] }
+env_logger = "0.11"
+pollster = "1.0"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+console_error_panic_hook = "0.1.7"
+console_log = "1.1"
+egui-winit = { version = "0.35", default-features = false }
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4.77"
+web-sys = { version = "0.3", features = ["Window", "Request", "Response"] }
 
 [dev-dependencies]
 tempfile = "3.27.0"

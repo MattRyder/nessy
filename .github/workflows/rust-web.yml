@@ -1,0 +1,33 @@
+name: Web Build & Test
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install dependencies
+      run: |
+        cargo install --force cargo-make
+        npm install -g wasm-pack
+
+    - uses: actions/checkout@v7
+
+    - name: Build Web
+      run: cargo make web
+
+    - name: Deploy to CF Pages
+      uses: cloudflare/wrangler-action@v4
+      with:
+        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+        command: pages deploy ./crates/nessy_bin/pkg --project-name=mr-nessy
