@@ -90,12 +90,7 @@ pub fn run() -> anyhow::Result<()> {
         }
     };
 
-    let window_attributes = WindowAttributes::default()
-        .with_title(&settings.title)
-        .with_inner_size(winit::dpi::LogicalSize::new(
-            settings.display.width,
-            settings.display.height,
-        ));
+    let window_attributes = WindowAttributes::default().with_title(&settings.title);
 
     #[cfg(not(target_arch = "wasm32"))]
     {

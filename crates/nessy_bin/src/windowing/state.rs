@@ -133,23 +133,24 @@ impl AppState {
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
-        if width > 0 && height > 0 {
-            #[cfg(target_arch = "wasm32")]
-            {
-                const WEBGL_MAX_DIMENSION_PX: u32 = 2048;
-                self.config.width = width.min(WEBGL_MAX_DIMENSION_PX);
-                self.config.height = height.min(WEBGL_MAX_DIMENSION_PX);
-            }
-
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                self.config.width = width;
-                self.config.height = height;
-            }
-
-            self.gpu.surface.configure(&self.gpu.device, &self.config);
-            self.is_surface_configured = true;
+        if width == 0 || height == 0 {
+            return;
         }
+        #[cfg(target_arch = "wasm32")]
+        {
+            const WEBGL_MAX_DIMENSION_PX: u32 = 2048;
+            self.config.width = width.min(WEBGL_MAX_DIMENSION_PX);
+            self.config.height = height.min(WEBGL_MAX_DIMENSION_PX);
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            self.config.width = width;
+            self.config.height = height;
+        }
+
+        self.gpu.surface.configure(&self.gpu.device, &self.config);
+        self.is_surface_configured = true;
     }
 
     pub fn render(&mut self, delta_time: std::time::Duration) -> anyhow::Result<()> {
