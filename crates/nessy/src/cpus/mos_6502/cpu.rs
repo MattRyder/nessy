@@ -1,9 +1,6 @@
 use crate::{
-    cpus::mos_6502::{
-        bus::{Bus, MemoryBus},
-        opcode::OPCODES,
-        status::Flags,
-    },
+    bus::{Bus, MemoryBus},
+    cpus::mos_6502::{opcode::OPCODES, status::Flags},
     interpret_result::{InstructionResult, ProgramResult},
     roms::ROM,
 };

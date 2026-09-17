@@ -68,8 +68,11 @@ mod test {
     use sif::parameterized;
 
     use super::*;
-    use crate::cpus::mos_6502::{
-        address_mode::AddressMode, bus::Bus, instruction_set::helpers::Helpers, status::Flags,
+    use crate::{
+        bus::Bus,
+        cpus::mos_6502::{
+            address_mode::AddressMode, instruction_set::helpers::Helpers, status::Flags,
+        },
     };
 
     fn create_cpu(memory_value: u8) -> Mos6502 {

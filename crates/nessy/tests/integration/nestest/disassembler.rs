@@ -211,7 +211,8 @@ impl Disassembler {
 mod test {
     use mockall::{mock, predicate};
     use nessy::{
-        cpus::mos_6502::{address_mode::AddressMode, bus::MemoryBus, cpu::Mos6502, opcode::OpCode},
+        bus::MemoryBus,
+        cpus::mos_6502::{address_mode::AddressMode, cpu::Mos6502, opcode::OpCode},
         interpret_result::InstructionResult,
     };
     use sif::parameterized;

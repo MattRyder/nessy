@@ -1,5 +1,4 @@
 pub mod address_mode;
-pub mod bus;
 pub mod cpu;
 pub mod instruction_set;
 pub mod memory;
