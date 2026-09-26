@@ -28,7 +28,7 @@ const NESTEST_INITIAL_PC: u16 = 0xC000;
 pub struct Nestest {}
 
 impl Nestest {
-    fn generate_state(cpu: &Mos6502) -> State {
+    fn generate_state(cpu: &mut Mos6502) -> State {
         let opcode_byte = cpu.bus.read(cpu.program_counter);
 
         let opcode = OPCODES.get(&opcode_byte).unwrap_or_else(|| {
@@ -118,9 +118,8 @@ fn build_nes(rom_file_path: &str) -> NES {
         panic!("ROM load error: {}", rom.err().unwrap());
     }
 
-    let mut nes = NES::default();
+    let mut nes = NES::new(rom.ok());
 
-    nes.cpu.load_program(rom.unwrap());
     nes.cpu.reset();
 
     nes.cpu.program_counter = NESTEST_INITIAL_PC;

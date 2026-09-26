@@ -1,8 +1,7 @@
 use crate::{
-    bus::{Bus, MemoryBus},
+    bus::{Bus, BusSystem},
     cpus::mos_6502::{opcode::OPCODES, status::Flags},
     interpret_result::{InstructionResult, ProgramResult},
-    roms::ROM,
 };
 
 #[derive(Debug, Default, PartialEq)]
@@ -25,7 +24,7 @@ pub struct Mos6502 {
     pub status: Flags,
     pub program_counter: u16,
     pub stack_pointer: u8,
-    pub bus: Box<dyn MemoryBus>,
+    pub bus: Box<dyn BusSystem>,
 }
 
 impl Default for Mos6502 {
@@ -35,7 +34,7 @@ impl Default for Mos6502 {
 }
 
 impl Mos6502 {
-    pub fn new(bus: Box<dyn MemoryBus>) -> Self {
+    pub fn new(bus: Box<dyn BusSystem>) -> Self {
         Self {
             registers: Registers::default(),
             status: Flags::from_bits_truncate(DEFAULT_FLAGS),
@@ -51,13 +50,6 @@ impl Mos6502 {
         self.registers = Registers::default();
         self.status = Flags::from_bits_truncate(DEFAULT_FLAGS);
         self.stack_pointer = STACK_POINTER_RESET;
-        self.program_counter = 0;
-    }
-
-    pub fn load_program(&mut self, rom: ROM) {
-        self.bus.insert_rom(rom);
-        self.reset();
-
         self.program_counter = self.bus.read_u16(RESET_VECTOR);
     }
 

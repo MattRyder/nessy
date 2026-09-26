@@ -5,19 +5,19 @@ use crate::integration::nestest::opcode_behaviour::OpcodeBehaviour;
 pub struct Disassembler {}
 
 impl Disassembler {
-    fn relative(cpu: &Mos6502, opcode: &OpCode) -> Option<String> {
+    fn relative(cpu: &mut Mos6502, opcode: &OpCode) -> Option<String> {
         let offset = cpu.bus.read(cpu.program_counter.wrapping_add(1)) as i8;
         let target = ((cpu.program_counter + 2) as i32 + offset as i32) as u16;
         Some(format!("{} ${:04X}", opcode.mnemonic, target))
     }
 
-    fn zeropage(cpu: &Mos6502, opcode: &OpCode) -> Option<String> {
+    fn zeropage(cpu: &mut Mos6502, opcode: &OpCode) -> Option<String> {
         let addr = cpu.bus.read(cpu.program_counter.wrapping_add(1));
         let value = cpu.bus.read(addr as u16);
         Some(format!("{} ${:02X} = {:02X}", opcode.mnemonic, addr, value))
     }
 
-    fn zeropage_x(cpu: &Mos6502, opcode: &OpCode) -> Option<String> {
+    fn zeropage_x(cpu: &mut Mos6502, opcode: &OpCode) -> Option<String> {
         let memory_address = cpu.bus.read(cpu.program_counter.wrapping_add(1));
         let target_address = memory_address.wrapping_add(cpu.registers.x);
         let target_value = cpu.bus.read(target_address as u16);
@@ -28,7 +28,7 @@ impl Disassembler {
         ))
     }
 
-    fn zeropage_y(cpu: &Mos6502, opcode: &OpCode) -> Option<String> {
+    fn zeropage_y(cpu: &mut Mos6502, opcode: &OpCode) -> Option<String> {
         let memory_address = cpu.bus.read(cpu.program_counter.wrapping_add(1));
         let target_address = memory_address.wrapping_add(cpu.registers.y);
         let target_value = cpu.bus.read(target_address as u16);
@@ -39,7 +39,7 @@ impl Disassembler {
         ))
     }
 
-    fn absolute(cpu: &Mos6502, opcode: &OpCode) -> Option<String> {
+    fn absolute(cpu: &mut Mos6502, opcode: &OpCode) -> Option<String> {
         let address = cpu.bus.read_u16(cpu.program_counter.wrapping_add(1));
         let mnemonic_address = format!("{} ${:04X}", opcode.mnemonic, address);
 
@@ -59,7 +59,7 @@ impl Disassembler {
         }
     }
 
-    fn absolute_x(cpu: &Mos6502, opcode: &OpCode) -> Option<String> {
+    fn absolute_x(cpu: &mut Mos6502, opcode: &OpCode) -> Option<String> {
         let memory_address = cpu.bus.read_u16(cpu.program_counter.wrapping_add(1));
         let target_address = memory_address.wrapping_add(cpu.registers.x as u16);
         let target_value = cpu.bus.read(target_address);
@@ -70,7 +70,7 @@ impl Disassembler {
         ))
     }
 
-    fn absolute_y(cpu: &Mos6502, opcode: &OpCode) -> Option<String> {
+    fn absolute_y(cpu: &mut Mos6502, opcode: &OpCode) -> Option<String> {
         let memory_address = cpu.bus.read_u16(cpu.program_counter.wrapping_add(1));
         let target_address = memory_address.wrapping_add(cpu.registers.y as u16);
         let target_value = cpu.bus.read(target_address);
@@ -81,7 +81,7 @@ impl Disassembler {
         ))
     }
 
-    fn indirect_x(cpu: &Mos6502, opcode: &OpCode) -> Option<String> {
+    fn indirect_x(cpu: &mut Mos6502, opcode: &OpCode) -> Option<String> {
         let mnemonic_str = String::from(opcode.mnemonic);
 
         match OpcodeBehaviour::from_mnemonic(opcode.mnemonic) {
@@ -117,7 +117,7 @@ impl Disassembler {
         }
     }
 
-    fn indirect_y(cpu: &Mos6502, opcode: &OpCode) -> Option<String> {
+    fn indirect_y(cpu: &mut Mos6502, opcode: &OpCode) -> Option<String> {
         let mnemonic_str = String::from(opcode.mnemonic);
 
         match OpcodeBehaviour::from_mnemonic(opcode.mnemonic) {
@@ -149,7 +149,7 @@ impl Disassembler {
         }
     }
 
-    fn no_address_mode(cpu: &Mos6502, opcode: &OpCode) -> Option<String> {
+    fn no_address_mode(cpu: &mut Mos6502, opcode: &OpCode) -> Option<String> {
         let mnemonic_str = String::from(opcode.mnemonic);
 
         match OpcodeBehaviour::from_mnemonic(opcode.mnemonic) {
@@ -184,7 +184,7 @@ impl Disassembler {
         }
     }
 
-    pub fn generate_disassembly(cpu: &Mos6502, opcode: &OpCode) -> Option<String> {
+    pub fn generate_disassembly(cpu: &mut Mos6502, opcode: &OpCode) -> Option<String> {
         match opcode.address_mode {
             AddressMode::Accumulator => Some(format!("{} A", opcode.mnemonic)),
             AddressMode::Implied => Some(String::from(opcode.mnemonic)),
@@ -211,7 +211,7 @@ impl Disassembler {
 mod test {
     use mockall::{mock, predicate};
     use nessy::{
-        bus::MemoryBus,
+        bus::BusSystem,
         cpus::mos_6502::{address_mode::AddressMode, cpu::Mos6502, opcode::OpCode},
         interpret_result::InstructionResult,
     };
@@ -231,15 +231,13 @@ mod test {
     mock! {
         pub Bus {}
 
-        impl MemoryBus for Bus {
-            fn read(&self, address: u16) -> u8;
+        impl BusSystem for Bus {
+            fn read(&mut self, address: u16) -> u8;
             fn write(&mut self, address: u16, data: u8);
             fn write_slice(&mut self, start_address: u16, data: &[u8]);
 
-            fn read_u16(&self, address: u16) -> u16;
+            fn read_u16(&mut self, address: u16) -> u16;
             fn write_u16(&mut self, address: u16, data: u16);
-
-            fn insert_rom(&mut self, rom: nessy::roms::ROM);
         }
     }
 
@@ -247,11 +245,11 @@ mod test {
     fn test_implied() {
         let mock_bus = MockBus::default();
 
-        let cpu = Mos6502::new(Box::new(mock_bus));
+        let mut cpu = Mos6502::new(Box::new(mock_bus));
 
         let opcode = create_opcode(TEST_MNEMONIC, AddressMode::Implied);
 
-        let result = Disassembler::generate_disassembly(&cpu, &opcode);
+        let result = Disassembler::generate_disassembly(&mut cpu, &opcode);
 
         assert_eq!("TEST", result.unwrap());
     }
@@ -262,11 +260,11 @@ mod test {
 
         mock_bus.expect_read_u16().returning(move |_| 0xC5F5);
 
-        let cpu = Mos6502::new(Box::new(mock_bus));
+        let mut cpu = Mos6502::new(Box::new(mock_bus));
 
         let opcode = create_opcode(TEST_MNEMONIC, AddressMode::Absolute);
 
-        let result = Disassembler::generate_disassembly(&cpu, &opcode);
+        let result = Disassembler::generate_disassembly(&mut cpu, &opcode);
 
         assert_eq!("TEST $C5F5", result.unwrap());
     }
@@ -286,11 +284,11 @@ mod test {
             .with(predicate::eq(0x10))
             .returning(move |_| 0x41);
 
-        let cpu = Mos6502::new(Box::new(mock_bus));
+        let mut cpu = Mos6502::new(Box::new(mock_bus));
 
         let opcode = create_opcode(TEST_MNEMONIC, AddressMode::ZeroPage);
 
-        let result = Disassembler::generate_disassembly(&cpu, &opcode);
+        let result = Disassembler::generate_disassembly(&mut cpu, &opcode);
 
         assert_eq!("TEST $10 = 41", result.unwrap());
     }
@@ -311,7 +309,7 @@ mod test {
 
         let opcode = create_opcode(TEST_MNEMONIC, AddressMode::Relative);
 
-        let result = Disassembler::generate_disassembly(&cpu, &opcode);
+        let result = Disassembler::generate_disassembly(&mut cpu, &opcode);
 
         assert_eq!("TEST $0013", result.unwrap());
     }
@@ -332,7 +330,7 @@ mod test {
 
         let opcode = create_opcode(TEST_MNEMONIC, AddressMode::Immediate);
 
-        let result = Disassembler::generate_disassembly(&cpu, &opcode);
+        let result = Disassembler::generate_disassembly(&mut cpu, &opcode);
 
         assert_eq!("TEST #$10", result.unwrap());
     }
@@ -368,33 +366,33 @@ mod test {
 
         let opcode = create_opcode(LDA_MNEMONIC, AddressMode::IndirectX);
 
-        let result = Disassembler::generate_disassembly(&cpu, &opcode);
+        let result = Disassembler::generate_disassembly(&mut cpu, &opcode);
 
         assert_eq!("LDA ($10,X) @ 11 = 0200 = AA", result.unwrap());
     }
 
     #[test]
     fn test_accumulator_returns_correctly() {
-        let cpu = Mos6502::default();
+        let mut cpu = Mos6502::default();
 
         let opcode = create_opcode(TEST_MNEMONIC, AddressMode::Accumulator);
 
         assert_eq!(
             Some(String::from("TEST A")),
-            Disassembler::generate_disassembly(&cpu, &opcode)
+            Disassembler::generate_disassembly(&mut cpu, &opcode)
         );
     }
 
     #[parameterized]
     #[case(AddressMode::None)]
     fn test_inaccessible_methods_return_none(address_mode: AddressMode) {
-        let cpu = Mos6502::default();
+        let mut cpu = Mos6502::default();
 
         let opcode = create_opcode(TEST_MNEMONIC, address_mode);
 
         assert_eq!(
             Some(String::from("TEST")),
-            Disassembler::generate_disassembly(&cpu, &opcode)
+            Disassembler::generate_disassembly(&mut cpu, &opcode)
         );
     }
 }

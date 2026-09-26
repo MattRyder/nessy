@@ -18,11 +18,11 @@ pub enum AddressMode {
 }
 
 pub trait MemoryAddressing {
-    fn get_address(&self, address_mode: &AddressMode) -> u16;
+    fn get_address(&mut self, address_mode: &AddressMode) -> u16;
 }
 
 impl MemoryAddressing for Mos6502 {
-    fn get_address(&self, address_mode: &AddressMode) -> u16 {
+    fn get_address(&mut self, address_mode: &AddressMode) -> u16 {
         match address_mode {
             AddressMode::Immediate => self.program_counter,
             AddressMode::ZeroPage => self.bus.read(self.program_counter) as u16,
@@ -65,7 +65,7 @@ impl MemoryAddressing for Mos6502 {
             | AddressMode::Implied
             | AddressMode::Relative
             | &AddressMode::Accumulator => {
-                panic!("Unsupported address mode: {:?}", &address_mode)
+                panic!("Unsupported address mode: {:?}", address_mode)
             }
         }
     }
@@ -108,7 +108,7 @@ mod tests {
         address_mode: AddressMode,
         expected_result: u16,
     ) {
-        let cpu = Helpers::create_cpu(program_counter, 0x0, memory, registers, None);
+        let mut cpu = Helpers::create_cpu(program_counter, 0x0, memory, registers, None);
 
         let result = cpu.get_address(&address_mode);
 

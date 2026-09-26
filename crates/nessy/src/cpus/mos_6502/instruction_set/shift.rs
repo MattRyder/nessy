@@ -113,7 +113,7 @@ mod test {
 
         assert_registers!(cpu, 0, 0, 0);
 
-        assert_memory_value!(&cpu.bus, 0xAA, 0x10);
+        assert_memory_value!(cpu.bus, 0xAA, 0x10);
     }
 
     #[parameterized]
@@ -148,6 +148,6 @@ mod test {
 
         assert_registers!(cpu, 0, 0, 0);
 
-        assert_memory_value!(&cpu.bus, 0xAA, 0x4);
+        assert_memory_value!(cpu.bus, 0xAA, 0x4);
     }
 }
