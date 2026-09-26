@@ -18,7 +18,7 @@ macro_rules! assert_registers {
 #[macro_export]
 macro_rules! assert_memory_value {
     ($memory:expr, $address:expr, $expected:expr) => {
-        assert_eq!($expected, $memory.read($address));
+        assert_eq!($expected, $memory.read($address).unwrap());
     };
 }
 

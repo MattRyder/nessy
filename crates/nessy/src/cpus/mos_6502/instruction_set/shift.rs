@@ -41,7 +41,7 @@ impl Shift {
 
     pub fn asl_memory(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
-        let address_value = cpu.bus.read(address);
+        let address_value = cpu.bus.read(address).unwrap();
         cpu.program_counter += opcode.bytes as u16;
 
         let shifted_result = Shift::arithmetic_shift(cpu, address_value);
@@ -60,7 +60,7 @@ impl Shift {
 
     pub fn lsr_memory(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
-        let address_value = cpu.bus.read(address);
+        let address_value = cpu.bus.read(address).unwrap();
         cpu.program_counter += opcode.bytes as u16;
 
         let shifted_result = Shift::logical_shift(cpu, address_value);
@@ -113,7 +113,7 @@ mod test {
 
         assert_registers!(cpu, 0, 0, 0);
 
-        assert_memory_value!(&cpu.bus, 0xAA, 0x10);
+        assert_memory_value!(cpu.bus, 0xAA, 0x10);
     }
 
     #[parameterized]
@@ -148,6 +148,6 @@ mod test {
 
         assert_registers!(cpu, 0, 0, 0);
 
-        assert_memory_value!(&cpu.bus, 0xAA, 0x4);
+        assert_memory_value!(cpu.bus, 0xAA, 0x4);
     }
 }

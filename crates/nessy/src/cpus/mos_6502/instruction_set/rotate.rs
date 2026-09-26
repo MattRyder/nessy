@@ -61,7 +61,7 @@ impl Rotate {
         direction: Direction,
     ) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
         cpu.program_counter += opcode.bytes as u16;
 
         let result = match direction {
@@ -131,7 +131,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(expected, cpu.bus.read(0x02));
+        assert_eq_hex!(expected, cpu.bus.read(0x02).unwrap());
 
         assert_eq!(flags, cpu.status);
     }

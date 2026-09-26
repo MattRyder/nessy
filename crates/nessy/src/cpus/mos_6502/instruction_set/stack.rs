@@ -34,7 +34,7 @@ impl Stack {
 
         let stack_address = STACK_BOTTOM + (cpu.stack_pointer as u16 + 1);
 
-        let result = cpu.bus.read(stack_address);
+        let result = cpu.bus.read(stack_address).unwrap();
 
         cpu.stack_pointer += 1;
         Ok(result)
@@ -118,7 +118,7 @@ mod test {
 
         assert_eq_hex!(0xFD, cpu.stack_pointer);
 
-        assert_eq_hex!(0xDD, cpu.bus.read(STACK_TOP - 1));
+        assert_eq_hex!(0xDD, cpu.bus.read(STACK_TOP - 1).unwrap());
     }
 
     #[test]
@@ -179,7 +179,7 @@ mod test {
 
         assert_eq_hex!(0xFD, cpu.stack_pointer);
 
-        let stack_flags = Flags::from_bits_truncate(cpu.bus.read(0x01FE));
+        let stack_flags = Flags::from_bits_truncate(cpu.bus.read(0x01FE).unwrap());
 
         //
         assert_eq!(expected_flags, stack_flags);

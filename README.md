@@ -39,6 +39,10 @@ cargo test
 
 Please follow idiomatic Rust patterns and include documentation for public APIs.
 
+## TODO
+
+- 2026-11-21: There's now a sporadic use of unwrap across the bus. To be removed.
+
 ## License
 
 This project is open source under the terms of the AGPLv3 License.

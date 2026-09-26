@@ -36,7 +36,7 @@ impl Increment {
         }
 
         let address = cpu.get_address(&opcode.address_mode);
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
         cpu.program_counter += opcode.bytes as u16;
 
         let result = Increment::increment(cpu, memory_value);
@@ -86,7 +86,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(0x02, cpu.bus.read(0x55));
+        assert_eq_hex!(0x02, cpu.bus.read(0x55).unwrap());
 
         assert_eq!(Flags::empty(), cpu.status);
     }

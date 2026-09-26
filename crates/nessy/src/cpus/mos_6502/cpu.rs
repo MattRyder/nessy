@@ -1,8 +1,8 @@
 use crate::{
-    bus::{Bus, MemoryBus},
+    bus::{Bus, BusSystem},
+    bus_error::BusError,
     cpus::mos_6502::{opcode::OPCODES, status::Flags},
     interpret_result::{InstructionResult, ProgramResult},
-    roms::ROM,
 };
 
 #[derive(Debug, Default, PartialEq)]
@@ -20,12 +20,20 @@ pub const RESET_VECTOR: u16 = 0xFFFC;
 // This is set to 0xFD to account for the reset cycle.
 pub const STACK_POINTER_RESET: u8 = 0xFD;
 
+pub enum CpuError {
+    // Returned when a reset is attempted without a cartridge.
+    CartridgeNotPresent,
+
+    // Returned when there's a bus error (temp: should be known.)
+    BusReadError,
+}
+
 pub struct Mos6502 {
     pub registers: Registers,
     pub status: Flags,
     pub program_counter: u16,
     pub stack_pointer: u8,
-    pub bus: Box<dyn MemoryBus>,
+    pub bus: Box<dyn BusSystem>,
 }
 
 impl Default for Mos6502 {
@@ -35,7 +43,7 @@ impl Default for Mos6502 {
 }
 
 impl Mos6502 {
-    pub fn new(bus: Box<dyn MemoryBus>) -> Self {
+    pub fn new(bus: Box<dyn BusSystem>) -> Self {
         Self {
             registers: Registers::default(),
             status: Flags::from_bits_truncate(DEFAULT_FLAGS),
@@ -47,18 +55,27 @@ impl Mos6502 {
 
     // TODO: Implement the full ASM clone of the start cycle.
     // see: docs/illustration-of-start-cycle.txt
-    pub fn reset(&mut self) {
+    pub fn reset(&mut self) -> Result<(), CpuError> {
         self.registers = Registers::default();
         self.status = Flags::from_bits_truncate(DEFAULT_FLAGS);
         self.stack_pointer = STACK_POINTER_RESET;
-        self.program_counter = 0;
-    }
 
-    pub fn load_program(&mut self, rom: ROM) {
-        self.bus.insert_rom(rom);
-        self.reset();
-
-        self.program_counter = self.bus.read_u16(RESET_VECTOR);
+        match self.bus.read_u16(RESET_VECTOR) {
+            Ok(pc) => {
+                self.program_counter = pc;
+                Ok(())
+            }
+            Err(read_error) => match read_error {
+                BusError::NoCartridgePresent => {
+                    self.program_counter = 0;
+                    Err(CpuError::CartridgeNotPresent)
+                }
+                _ => {
+                    self.program_counter = 0;
+                    Err(CpuError::BusReadError)
+                }
+            },
+        }
     }
 
     pub fn run(&mut self) -> ProgramResult {
@@ -72,9 +89,17 @@ impl Mos6502 {
         loop {
             callback(self);
 
-            let opcode_byte = self.bus.read(self.program_counter);
+            let bus_read_result = self.bus.read(self.program_counter);
+
+            if let Err(err) = bus_read_result {
+                panic!("Failed to read from the bus: {:?}", err);
+            }
+
             self.program_counter += 1;
 
+            let opcode_byte = bus_read_result.unwrap();
+
+            // TODO: an ungraceful unwrap on an expected Ok(_). Mache besser.
             match OPCODES.get(&opcode_byte) {
                 Some(opcode) => {
                     // println!(
@@ -99,7 +124,7 @@ impl Mos6502 {
                         InstructionResult::EndProgram => return ProgramResult::Ok,
                     }
                 }
-                None => panic!("Opcode not implemented: 0x{:x}.", opcode_byte),
+                None => panic!("Opcode not implemented: 0x{:x}.", &opcode_byte),
             }
         }
     }
@@ -111,14 +136,14 @@ mod tests {
     use crate::cpus::mos_6502::status::Flags;
 
     #[test]
-    fn reset_resets_everything() {
+    fn reset_given_no_cartridge_returns_error() {
         let mut cpu = Mos6502::default();
         cpu.registers.a = 1;
         cpu.registers.x = 2;
         cpu.registers.y = 3;
         cpu.status = Flags::all();
 
-        cpu.reset();
+        let result = cpu.reset();
 
         assert_eq!(0, cpu.registers.a);
         assert_eq!(0, cpu.registers.x);
@@ -126,6 +151,7 @@ mod tests {
 
         assert_eq!(Flags::from_bits_truncate(DEFAULT_FLAGS), cpu.status);
 
-        assert_eq!(0, cpu.program_counter);
+        // It resets pretty much everything but the last op is to reset the PC.
+        // If the bus read returns CartridgeNotPresent, then it's a zero.
     }
 }
