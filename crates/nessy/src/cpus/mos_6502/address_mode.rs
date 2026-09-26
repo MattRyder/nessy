@@ -18,45 +18,49 @@ pub enum AddressMode {
 }
 
 pub trait MemoryAddressing {
-    fn get_address(&self, address_mode: &AddressMode) -> u16;
+    fn get_address(&mut self, address_mode: &AddressMode) -> u16;
 }
 
 impl MemoryAddressing for Mos6502 {
-    fn get_address(&self, address_mode: &AddressMode) -> u16 {
+    // TODO: This uses unwrap, obviously rubbish.
+    fn get_address(&mut self, address_mode: &AddressMode) -> u16 {
         match address_mode {
             AddressMode::Immediate => self.program_counter,
-            AddressMode::ZeroPage => self.bus.read(self.program_counter) as u16,
+            AddressMode::ZeroPage => self.bus.read(self.program_counter).unwrap() as u16,
             AddressMode::ZeroPageX => {
-                let pc_address = self.bus.read(self.program_counter);
+                let pc_address = self.bus.read(self.program_counter).unwrap();
                 pc_address.wrapping_add(self.registers.x) as u16
             }
             AddressMode::ZeroPageY => {
-                let pc_address = self.bus.read(self.program_counter);
+                let pc_address = self.bus.read(self.program_counter).unwrap();
                 pc_address.wrapping_add(self.registers.y) as u16
             }
-            AddressMode::Absolute => self.bus.read_u16(self.program_counter),
+            AddressMode::Absolute => self.bus.read_u16(self.program_counter).unwrap(),
             AddressMode::AbsoluteX => {
-                let pc_address = self.bus.read_u16(self.program_counter);
+                let pc_address = self.bus.read_u16(self.program_counter).unwrap();
                 pc_address.wrapping_add(self.registers.x as u16)
             }
             AddressMode::AbsoluteY => {
-                let pc_address = self.bus.read_u16(self.program_counter);
+                let pc_address = self.bus.read_u16(self.program_counter).unwrap();
                 pc_address.wrapping_add(self.registers.y as u16)
             }
             AddressMode::IndirectX => {
-                let base_address = self.bus.read(self.program_counter);
+                let base_address = self.bus.read(self.program_counter).unwrap();
 
                 let pointer = base_address.wrapping_add(self.registers.x);
-                let lo = self.bus.read(pointer as u16);
-                let hi = self.bus.read(pointer.wrapping_add(1) as u16);
+                let lo = self.bus.read(pointer as u16).unwrap();
+                let hi = self.bus.read(pointer.wrapping_add(1) as u16).unwrap();
 
                 (hi as u16) << 8 | (lo as u16)
             }
             AddressMode::IndirectY => {
-                let base_address = self.bus.read(self.program_counter);
+                let base_address = self.bus.read(self.program_counter).unwrap();
 
-                let lo = self.bus.read(base_address as u16);
-                let hi = self.bus.read((base_address).wrapping_add(1) as u16);
+                let lo = self.bus.read(base_address as u16).unwrap();
+                let hi = self
+                    .bus
+                    .read((base_address).wrapping_add(1) as u16)
+                    .unwrap();
 
                 let dereference_base = (hi as u16) << 8 | (lo as u16);
                 dereference_base.wrapping_add(self.registers.y as u16)
@@ -65,7 +69,7 @@ impl MemoryAddressing for Mos6502 {
             | AddressMode::Implied
             | AddressMode::Relative
             | &AddressMode::Accumulator => {
-                panic!("Unsupported address mode: {:?}", &address_mode)
+                panic!("Unsupported address mode: {:?}", address_mode)
             }
         }
     }
@@ -108,7 +112,7 @@ mod tests {
         address_mode: AddressMode,
         expected_result: u16,
     ) {
-        let cpu = Helpers::create_cpu(program_counter, 0x0, memory, registers, None);
+        let mut cpu = Helpers::create_cpu(program_counter, 0x0, memory, registers, None);
 
         let result = cpu.get_address(&address_mode);
 

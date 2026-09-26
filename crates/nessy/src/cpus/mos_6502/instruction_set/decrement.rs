@@ -39,7 +39,7 @@ impl Decrement {
         let address = cpu.get_address(&opcode.address_mode);
         cpu.program_counter += opcode.bytes as u16;
 
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
 
         let decrement_result = Decrement::decrement(cpu, memory_value);
 
@@ -79,7 +79,7 @@ impl Decrement {
         let address = cpu.get_address(&opcode.address_mode);
         cpu.program_counter += opcode.bytes as u16;
 
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
         let result = memory_value.wrapping_sub(1);
 
         cpu.bus.write(address, result);
@@ -121,7 +121,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(0x00, cpu.bus.read(0x02));
+        assert_eq_hex!(0x00, cpu.bus.read(0x02).unwrap());
 
         assert_eq!(Flags::ZERO, cpu.status);
     }
@@ -192,7 +192,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq_hex!(expected_result, cpu.bus.read(0xAA));
+        assert_eq_hex!(expected_result, cpu.bus.read(0xAA).unwrap());
 
         assert_eq!(expected_flags, cpu.status);
     }

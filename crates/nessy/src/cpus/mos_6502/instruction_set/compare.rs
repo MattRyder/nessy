@@ -28,7 +28,7 @@ impl Compare {
     // CMP - Compare
     pub fn cmp(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
 
         cpu.program_counter += opcode.bytes as u16;
 
@@ -50,7 +50,7 @@ impl Compare {
         }
 
         let address = cpu.get_address(&opcode.address_mode);
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
 
         cpu.program_counter += opcode.bytes as u16;
 
@@ -72,7 +72,7 @@ impl Compare {
         }
 
         let address = cpu.get_address(&opcode.address_mode);
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
 
         cpu.program_counter += opcode.bytes as u16;
 

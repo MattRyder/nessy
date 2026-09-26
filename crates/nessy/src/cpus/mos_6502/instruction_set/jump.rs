@@ -25,20 +25,20 @@ impl Jump {
             }
             JumpType::Indirect => {
                 // First address
-                let ptr_lo = cpu.bus.read(cpu.program_counter);
+                let ptr_lo = cpu.bus.read(cpu.program_counter).unwrap();
                 cpu.program_counter = cpu.program_counter.wrapping_add(1);
-                let ptr_hi = cpu.bus.read(cpu.program_counter);
+                let ptr_hi = cpu.bus.read(cpu.program_counter).unwrap();
                 cpu.program_counter = cpu.program_counter.wrapping_add(1);
 
                 // Form 16-bit ptr address
                 let ptr = u16::from(ptr_lo) | (u16::from(ptr_hi) << 8);
 
                 // Get the indirect jump's lo byte of the address
-                let jump_target_lo = cpu.bus.read(ptr);
+                let jump_target_lo = cpu.bus.read(ptr).unwrap();
 
                 // Build up the high byte of the jump target
                 let hi_address = (ptr & 0xFF00) | ((ptr.wrapping_add(1)) & 0x00FF);
-                let jump_target_hi = cpu.bus.read(hi_address);
+                let jump_target_hi = cpu.bus.read(hi_address).unwrap();
 
                 cpu.program_counter = u16::from(jump_target_lo) | (u16::from(jump_target_hi) << 8);
             }
@@ -162,8 +162,8 @@ mod test {
         assert_eq_hex!(0x01FF, cpu.program_counter);
 
         assert_eq_hex!(0xFD, cpu.stack_pointer);
-        assert_eq_hex!(0x12, cpu.bus.read(STACK_BOTTOM + 0xFF));
-        assert_eq_hex!(0x35, cpu.bus.read(STACK_BOTTOM + 0xFE));
+        assert_eq_hex!(0x12, cpu.bus.read(STACK_BOTTOM + 0xFF).unwrap());
+        assert_eq_hex!(0x35, cpu.bus.read(STACK_BOTTOM + 0xFE).unwrap());
     }
 
     #[test]

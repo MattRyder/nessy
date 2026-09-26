@@ -15,7 +15,7 @@ impl Load {
     pub fn lda(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        cpu.registers.a = cpu.bus.read(address);
+        cpu.registers.a = cpu.bus.read(address).unwrap();
         Load::set_flags(cpu, cpu.registers.a);
 
         cpu.program_counter += opcode.bytes as u16;
@@ -27,7 +27,7 @@ impl Load {
     pub fn ldx(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        cpu.registers.x = cpu.bus.read(address);
+        cpu.registers.x = cpu.bus.read(address).unwrap();
         Load::set_flags(cpu, cpu.registers.x);
 
         cpu.program_counter += opcode.bytes as u16;
@@ -39,7 +39,7 @@ impl Load {
     pub fn ldy(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        cpu.registers.y = cpu.bus.read(address);
+        cpu.registers.y = cpu.bus.read(address).unwrap();
         Load::set_flags(cpu, cpu.registers.y);
 
         cpu.program_counter += opcode.bytes as u16;
@@ -51,7 +51,7 @@ impl Load {
     pub fn lax(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        let value = cpu.bus.read(address);
+        let value = cpu.bus.read(address).unwrap();
         cpu.registers.a = value;
         cpu.registers.x = value;
 

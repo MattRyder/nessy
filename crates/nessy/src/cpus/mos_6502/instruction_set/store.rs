@@ -81,7 +81,7 @@ mod test {
 
         Store::sta(&opcode, &mut cpu);
 
-        assert_eq!(0x22, cpu.bus.read(0x01))
+        assert_eq!(0x22, cpu.bus.read(0x01).unwrap())
     }
 
     #[test]
@@ -102,7 +102,7 @@ mod test {
 
         Store::stx(&opcode, &mut cpu);
 
-        assert_eq!(0x22, cpu.bus.read(0x01))
+        assert_eq!(0x22, cpu.bus.read(0x01).unwrap())
     }
 
     #[test]
@@ -123,7 +123,7 @@ mod test {
 
         Store::sty(&opcode, &mut cpu);
 
-        assert_eq!(0x22, cpu.bus.read(0x01))
+        assert_eq!(0x22, cpu.bus.read(0x01).unwrap())
     }
 
     #[parameterized]
@@ -142,7 +142,7 @@ mod test {
 
         Store::sax(&opcode, &mut cpu);
 
-        assert_eq_hex!(expected_value, cpu.bus.read(0xAA));
+        assert_eq_hex!(expected_value, cpu.bus.read(0xAA).unwrap());
         assert_eq!(expected_flags, cpu.status);
     }
 }

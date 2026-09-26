@@ -10,7 +10,7 @@ impl Branch {
     where
         F: Fn(&mut Mos6502) -> bool,
     {
-        let offset = cpu.bus.read(cpu.program_counter) as i8;
+        let offset = cpu.bus.read(cpu.program_counter).unwrap() as i8;
         cpu.program_counter += 1;
 
         if predicate(cpu) {

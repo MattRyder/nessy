@@ -33,21 +33,21 @@ impl Logical {
     // AND - Logical AND
     pub fn and(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         Logical::accumulator_rule(opcode, cpu, |cpu, address| {
-            cpu.registers.a &= cpu.bus.read(address);
+            cpu.registers.a &= cpu.bus.read(address).unwrap();
         })
     }
 
     // EOR - Exclusive OR
     pub fn eor(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         Logical::accumulator_rule(opcode, cpu, |cpu, address| {
-            cpu.registers.a ^= cpu.bus.read(address);
+            cpu.registers.a ^= cpu.bus.read(address).unwrap();
         })
     }
 
     // ORA - Logical Inclusive OR
     pub fn ora(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         Logical::accumulator_rule(opcode, cpu, |cpu, address| {
-            cpu.registers.a |= cpu.bus.read(address);
+            cpu.registers.a |= cpu.bus.read(address).unwrap();
         })
     }
 
@@ -60,7 +60,7 @@ impl Logical {
         let address = cpu.get_address(&opcode.address_mode);
         cpu.program_counter += opcode.bytes as u16;
 
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
 
         let acca_and_mem = cpu.registers.a & memory_value;
 
@@ -77,7 +77,7 @@ impl Logical {
         let address = cpu.get_address(&opcode.address_mode);
         cpu.program_counter += opcode.bytes as u16;
 
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
 
         let result = Shift::logical_shift(cpu, memory_value);
 
@@ -98,7 +98,7 @@ impl Logical {
         cpu.program_counter += opcode.bytes as u16;
 
         // Shift left and write value back to memory
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
 
         let result = Shift::arithmetic_shift(cpu, memory_value);
 
@@ -121,7 +121,7 @@ impl Logical {
         cpu.program_counter += opcode.bytes as u16;
 
         // Shift left and write value back to memory
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
 
         let result = Rotate::rotate_left(cpu, memory_value);
 
@@ -174,7 +174,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, Logical::rla(&opcode, &mut cpu));
 
-        assert_eq_hex!(expected_memory_value, cpu.bus.read(0x02));
+        assert_eq_hex!(expected_memory_value, cpu.bus.read(0x02).unwrap());
 
         assert_eq_hex!(expected_accumulator, cpu.registers.a);
         assert_eq!(expected_flags, cpu.status);
@@ -207,7 +207,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, Logical::sre(&opcode, &mut cpu));
 
-        assert_eq_hex!(expected_memory_value, cpu.bus.read(0x02));
+        assert_eq_hex!(expected_memory_value, cpu.bus.read(0x02).unwrap());
 
         assert_eq_hex!(expected_accumulator, cpu.registers.a);
         assert_eq!(expected_flags, cpu.status);
@@ -240,7 +240,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, Logical::slo(&opcode, &mut cpu));
 
-        assert_eq_hex!(expected_memory_value, cpu.bus.read(0x02));
+        assert_eq_hex!(expected_memory_value, cpu.bus.read(0x02).unwrap());
 
         assert_eq_hex!(expected_accumulator, cpu.registers.a);
         assert_eq!(expected_flags, cpu.status);

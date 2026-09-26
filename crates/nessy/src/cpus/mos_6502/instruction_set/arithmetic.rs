@@ -74,7 +74,7 @@ impl Arithmetic {
     pub fn adc(opcode: &OpCode, cpu: &mut Mos6502) -> InstructionResult {
         let address = cpu.get_address(&opcode.address_mode);
 
-        let m = cpu.bus.read(address);
+        let m = cpu.bus.read(address).unwrap();
 
         cpu.program_counter += opcode.bytes as u16;
 
@@ -93,7 +93,7 @@ impl Arithmetic {
 
         cpu.program_counter += opcode.bytes as u16;
 
-        let m = cpu.bus.read(address);
+        let m = cpu.bus.read(address).unwrap();
 
         cpu.registers.a = Arithmetic::sbc_impl(cpu, cpu.registers.a, m);
 
@@ -107,7 +107,7 @@ impl Arithmetic {
 
         cpu.program_counter += opcode.bytes as u16;
 
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
 
         let result = memory_value.wrapping_add(1);
 
@@ -124,7 +124,7 @@ impl Arithmetic {
 
         cpu.program_counter += opcode.bytes as u16;
 
-        let memory_value = cpu.bus.read(address);
+        let memory_value = cpu.bus.read(address).unwrap();
 
         let result = Rotate::rotate_right(cpu, memory_value);
 
@@ -176,7 +176,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, Arithmetic::rra(&opcode, &mut cpu));
 
-        assert_eq_hex!(expected_memory_value, cpu.bus.read(0x02));
+        assert_eq_hex!(expected_memory_value, cpu.bus.read(0x02).unwrap());
 
         assert_eq_hex!(expected_accumulator, cpu.registers.a);
         assert_eq!(expected_flags, cpu.status);
@@ -285,7 +285,7 @@ mod test {
 
         assert_eq!(InstructionResult::Ok, result);
 
-        assert_eq!(expected_new_memory_value, cpu.bus.read(0x02));
+        assert_eq!(expected_new_memory_value, cpu.bus.read(0x02).unwrap());
 
         assert_eq_hex!(expected_accumulator, cpu.registers.a);
 
